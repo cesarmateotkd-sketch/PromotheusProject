@@ -1,0 +1,2 @@
+commit: 8f40787fbde8e6d8fe51c5a3553e5635fff40d2b
+repo: https://github.com/ahujasid/mcp-for-blender
