@@ -148,3 +148,9 @@ Sources:
 - https://alexandremacmillan.com/2019/06/13/idle-mechanics-and-monetizing-progession-in-afk-arena/
 - https://archive.org/details/GDC2015Pecorella
 - https://media.gdcvault.com/gdceurope2016/presentations/Pecorella_Anthony_Quest%20for%20Progress.pdf
+
+### D18 — Prototype 1 verdict: change direction (art and feel) (2026-11-15)
+First play of `prototypes/frog-ronin` (tag one-shot/frog-ronin): gameplay works; best
+moment was a combo firing; worst was picks feeling samey. Verdict: change direction.
+Keep combo banners, auto-fight duels, pick 1 of 3 and dojo crafting. Change most: a
+major art and feel overhaul (graphics "not quite there"). See prototypes/frog-ronin/PIVOT-NOTE.md.
