@@ -25,11 +25,14 @@ mark superseded items instead.
 | D7 | 2026-11-15 | Player fantasy: **getting stronger** (power fantasy — numbers explode, bosses fall) | User choice | Active |
 | D8 | 2026-11-15 | Session style: **active + idle** — real play sessions with decisions, progress builds while away | Fills the "idle with real decisions" gap (R2) | Active |
 | D9 | 2026-11-15 | Social: **light social** at launch — leaderboards, friend visits, gifting; no live servers needed | Social idle is a gap (R2) without big server cost | Active |
+| D10 | 2026-11-15 | Mascot: **Frog Ronin** — a small frog with a twig sword who becomes a pond legend; eats defeated bugs to power up; visual upgrade ladder (lily-pad armour → reed spear → dragon-scale samurai) | Chosen from 4 original pitches (Pebble, Toast Knight, Frog Ronin, Cactus Gladiator) | Active |
+| D11 | 2026-11-15 | Tone: **cute but epic** — adorable lead, battles and growth feel genuinely heroic | User choice | Active |
+| D12 | 2026-11-15 | Active play: **roguelite build choices** each run (pick upgrades/skills), progress keeps building while away | Matches Capybara Go-style hits; gives real decisions (D8) | Active |
 
 ## Open questions (brainstorm order)
 1. ~~Colour psychology for best results~~ → done (R1)
-2. Theme / setting of the idle game — *in progress*: direction set (D6–D9); next = pick the mascot and its twist
-3. Core gameplay loop (what the player does in the first 30 seconds, 5 minutes, 1 day)
+2. ~~Theme / setting~~ → Frog Ronin, cute but epic (D10–D11)
+3. Core gameplay loop (what the player does in the first 30 seconds, 5 minutes, 1 day) — *next*; roguelite run structure (D12)
 4. Progression and upgrade structure (ties to the Terraria tier ladder and Stardew growth stages in the style guide)
 5. Monetisation (ethical: no deceptive patterns — see Goals)
 6. Camera / view (side, top-down, isometric) and sprite sizes
@@ -100,3 +103,11 @@ Sources:
 - https://appmagic.rocks/research/idle-steam-games-2026
 - https://rolearn.dev/trend-reports/genre-shift-2026-predictions/
 - https://www.gamemeca.com/en/view.php?gid=1782789
+
+### R3 — Competitor check: frog / samurai idle and roguelite games (2026-11-15)
+No frog-samurai / frog-ronin game found. Nearby titles to stay distinct from:
+- Legend of Frog: Idle RPG (Azur) — frog necromancer + undead tank, 100K+ installs — https://play.google.com/store/apps/details?id=com.metime.movingtower&hl=en_US
+- Frog Idle – Lazy Kaeru (TDCGames, 10K+) — check its style if we ever lean heavily Japanese
+- Froguelike (Steam bullet-heaven, frog eats bugs) — https://store.steampowered.com/app/2315020/Froguelike/ — overlaps our "eats bugs" idea; keep bug-eating as flavour, not the core hook
+- Ronin: The Last Samurai (Krafton) — samurai roguelike, no frog — https://www.krafton.com/en/games/ronin-the-last-samurai/
+**Takeaway:** frog + ronin + idle roguelite is open; our hook should be the samurai growth fantasy (twig sword → legend), not bug-eating alone.
