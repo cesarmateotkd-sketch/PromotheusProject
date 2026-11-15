@@ -28,13 +28,17 @@ mark superseded items instead.
 | D10 | 2026-11-15 | Mascot: **Frog Ronin** — a small frog with a twig sword who becomes a pond legend; eats defeated bugs to power up; visual upgrade ladder (lily-pad armour → reed spear → dragon-scale samurai) | Chosen from 4 original pitches (Pebble, Toast Knight, Frog Ronin, Cactus Gladiator) | Active |
 | D11 | 2026-11-15 | Tone: **cute but epic** — adorable lead, battles and growth feel genuinely heroic | User choice | Active |
 | D12 | 2026-11-15 | Active play: **roguelite build choices** each run (pick upgrades/skills), progress keeps building while away | Matches Capybara Go-style hits; gives real decisions (D8) | Active |
-| D13 | 2026-11-15 | Core loop **draft** (see R4 "Draft loop"): auto-fight + pick 1-of-3 techniques that combine into combos; ~5-min runs ending in a boss; meta between runs; capped idle "meditation" chest; daily dojo + friend visits; ponds as chapters | Fixes the main critique of the hits (runs without real decisions) while keeping their proven structure | Proposed — refining with user |
+| D13 | 2026-11-15 | Core loop **draft** (see R4 "Draft loop"): auto-fight + pick 1-of-3 techniques that combine into combos; ~5-min runs ending in a boss; meta between runs; capped idle "meditation" chest; daily dojo + friend visits; ponds as chapters | Fixes the main critique of the hits (runs without real decisions) while keeping their proven structure | Active (refined by D14–D17) |
+| D14 | 2026-11-15 | Run length: **about 3–5 minutes** | Fits a phone break; several runs per session | Active |
+| D15 | 2026-11-15 | Control: **auto-fight + technique picks** (one-handed play) | Simplest to play; keeps idle feel | Active |
+| D16 | 2026-11-15 | Run limit: **free runs, capped rewards** — full rewards only for the first few runs a day; no energy paywall | Avoids energy-as-paywall feeling; still paces the economy | Active |
+| D17 | 2026-11-15 | Gear: **crafting from bug materials + occasional big rare drops** | Player control plus real "big win" moments (fixes Legend of Mushroom's weak spot, R4) | Active |
 
 ## Open questions (brainstorm order)
 1. ~~Colour psychology for best results~~ → done (R1)
 2. ~~Theme / setting~~ → Frog Ronin, cute but epic (D10–D11)
-3. Core gameplay loop (what the player does in the first 30 seconds, 5 minutes, 1 day) — *next*; roguelite run structure (D12)
-4. Progression and upgrade structure (ties to the Terraria tier ladder and Stardew growth stages in the style guide)
+3. ~~Core gameplay loop~~ → D13–D17
+4. Progression and upgrade structure — *next* (ties to the Terraria tier ladder and Stardew growth stages in the style guide)
 5. Monetisation (ethical: no deceptive patterns — see Goals)
 6. Camera / view (side, top-down, isometric) and sprite sizes
 7. The original market-gap research from the earlier chat was **not recovered** — redo if needed
