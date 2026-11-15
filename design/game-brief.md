@@ -56,6 +56,7 @@ First real trouble: a Mantis mini-boss around minute 2. The Hornet Shogun boss a
 
 ## Keep
 - The run loop's gameplay: auto-fight, 1-of-3 picks, combos, boss (first play: "the game play works")
+- A combo firing: the banner and the frog changing how he fights (first play: best moment)
 
 ## Avoid
 - energy or stamina limits on runs (D16)
