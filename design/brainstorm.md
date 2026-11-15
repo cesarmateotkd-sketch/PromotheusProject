@@ -179,3 +179,9 @@ major art and feel overhaul (graphics "not quite there"). See prototypes/frog-ro
   shoulder armour).
 - Scene changes: brighter, cuter golden-hour palette instead of night; bigger hit effects
   (bold slash trail, impact flash, damage numbers).
+
+### D22 — key art locked (2026-11-15)
+Key art v2 approved as the look: pixelated 3D, golden-hour HD-2D pond, heroic chibi frog in
+haori with shoulder armour, bold pixel hit effects and damage numbers. One change before
+animating: a bigger face and grin, so the expression reads at phone size. Next: the frog's
+full animation set rendered from the same Blender model.
