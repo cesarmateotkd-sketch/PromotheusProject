@@ -3,6 +3,13 @@
 Indie game development managed through 49 coordinated Claude Code subagents.
 Each agent owns a specific domain, enforcing separation of concerns and quality.
 
+## Project Memory (read first)
+
+- **`design/brainstorm.md`** — the game's living memory: goals, research (with sources),
+  decisions log and open questions. Read it at the start of every session; append
+  new research and decisions there and commit after each brainstorm step.
+- **`design/art/sprite-style-guide.md`** — measured pixel-art rules from 12 reference studies.
+
 ## Technology Stack
 
 - **Engine**: [CHOOSE: Web / Godot 4 / Unity / Unreal Engine 5]
