@@ -170,3 +170,12 @@ major art and feel overhaul (graphics "not quite there"). See prototypes/frog-ro
 - Proportions: heroic chibi, about 3 heads tall (cute but epic, D11).
 - First deliverable: one key art still of a duel (frog vs beetle on the HD-2D pond) to lock
   the look before any animation.
+
+### D21 — key art review 1 (2026-11-15)
+- Finish locked: A, pixelated 3D (low-res toon render, hue-shifted 4-tone ramps, palette
+  snap, 1px violet-black outline). Smooth toon dropped.
+- Frog changes: more heroic pose (lower stance, lean in, sword raised), clearer face (bigger
+  eyes, a visible grin, less cheek bulge), fuller samurai outfit (haori sleeves, sash knot,
+  shoulder armour).
+- Scene changes: brighter, cuter golden-hour palette instead of night; bigger hit effects
+  (bold slash trail, impact flash, damage numbers).
