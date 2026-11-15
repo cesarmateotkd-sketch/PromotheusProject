@@ -20,11 +20,15 @@ mark superseded items instead.
 | D2 | 2026-11-15 | Art: **pixel art**, built to `design/art/sprite-style-guide.md` | 12 reference studies done; rules measured from shipped games | Active |
 | D3 | 2026-11-15 | Always **study references before making a new visual style**, then measure results against the style card | Biggest quality jumps came right after studies | Active |
 | D4 | 2026-11-15 | The ninja character was a **test of the pipeline only** — the game is not ninja-themed | User clarified | Active |
-| D5 | 2026-11-15 | Colour strategy: saturation hierarchy + learned rarity ladder (see Research R1) | Evidence-based; see R1 | Proposed — confirm with user |
+| D5 | 2026-11-15 | Colour strategy: saturation hierarchy + learned rarity ladder (see Research R1) | Evidence-based; see R1 | Active (approved by user) |
+| D6 | 2026-11-15 | Theme direction: **quirky mascot idle RPG** | Idle RPG is where revenue is growing; mascot charm sells (Capybara Go, Legend of Mushroom) — see R2 | Active |
+| D7 | 2026-11-15 | Player fantasy: **getting stronger** (power fantasy — numbers explode, bosses fall) | User choice | Active |
+| D8 | 2026-11-15 | Session style: **active + idle** — real play sessions with decisions, progress builds while away | Fills the "idle with real decisions" gap (R2) | Active |
+| D9 | 2026-11-15 | Social: **light social** at launch — leaderboards, friend visits, gifting; no live servers needed | Social idle is a gap (R2) without big server cost | Active |
 
 ## Open questions (brainstorm order)
 1. ~~Colour psychology for best results~~ → done (R1)
-2. Theme / setting of the idle game — *next*
+2. Theme / setting of the idle game — *in progress*: direction set (D6–D9); next = pick the mascot and its twist
 3. Core gameplay loop (what the player does in the first 30 seconds, 5 minutes, 1 day)
 4. Progression and upgrade structure (ties to the Terraria tier ladder and Stardew growth stages in the style guide)
 5. Monetisation (ethical: no deceptive patterns — see Goals)
@@ -72,3 +76,27 @@ amplify the gameplay loop. Use colour to make rewards feel big and the screen re
 | Alerts | One reserved accent, used rarely | Stays effective (no habituation) |
 
 **Caveat:** game-specific sources were mostly practitioner blogs; used only where they agree with the peer-reviewed work.
+
+### R2 — Which idle-game themes are working, from the most successful studios (2026-11-15)
+| Studio / game | Theme | Why it worked |
+|---|---|---|
+| Kolibri Games — Idle Miner Tycoon (~125M downloads) | Mining tycoon | Twist on a familiar theme (dig *down* instead of building up); friendly art, "only positive emotions"; simple satisfying loop, depth unlocked later; 75% day-1 retention vs ~40% typical; weekly LiveOps |
+| Nexon — MapleStory: Idle RPG | Idle RPG on known IP | Biggest idle game of 2026: $47M peak month, $350M+ in under a year |
+| Habby — Capybara Go! / Joy Net — Legend of Mushroom | Quirky mascot idle RPG | Revenue held while downloads fell — retained players carry the business |
+| AppQuantum — Gold and Goblins | Mining + cute goblins | $113M+ IAP |
+| Grow a Garden (Roblox) / Rusty's Retirement (PC) | Cozy growing / farming | 35B+ visits; "renaissance" of desktop idlers |
+
+**Patterns:** (1) twist a familiar theme rather than invent one; (2) plain tycoon reskins are saturated — "only if differentiated";
+(3) idle RPG is where revenue is growing (Korea: downloads -30%, revenue +57% over 12 months);
+(4) open gaps: social / trading / co-op idle, idle with real decisions, cozy growing; (5) a lovable, slightly odd mascot is a theme in itself.
+
+Sources:
+- https://www.gameanalytics.com/blog/making-a-hit-idle-game-eight-lessons-from-kolibri-games
+- https://www.eu-startups.com/2020/10/get-your-game-out-and-on-the-market-as-fast-as-possible-interview-with-kolibri-games-co-founder-janosch-sadowski/
+- https://www.kolibrigames.com/blog/lets-dig-in/
+- https://www.gamigion.com/top-10-midcore-games-by-iap-revenue-in-q1-2026/
+- https://www.pocketgamer.biz/h1-2026-genre-analysis-strategy-stumbles-rpgs-fall-and-puzzle-revenue-ramps-up/
+- https://sensortower.com/blog/2025-q3-ios-top-5-idle%20rpg-units-us-6040bbc2241bc16eb883a0cb
+- https://appmagic.rocks/research/idle-steam-games-2026
+- https://rolearn.dev/trend-reports/genre-shift-2026-predictions/
+- https://www.gamemeca.com/en/view.php?gid=1782789
