@@ -1,0 +1,891 @@
+<!doctype html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<!-- Question: Is the run loop (auto-fight + pick 1-of-3 + combos + boss) fun, and does it make you want another run? -->
+<!-- Date: 2026-11-15 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Frog Ronin</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0b16; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+  body { font-variant-numeric: tabular-nums; }
+  canvas { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script src="config.js"></script>
+<script>
+'use strict';
+// Frog Ronin: a tiny frog samurai auto-duels bugs along a pond path. Every few stops you pick
+// 1 of 3 techniques; pairs form named combos. Mantis mini-boss mid-run, Hornet Shogun at the end.
+// Between runs, craft gear at the dojo from bug materials.
+
+// ---- Built to be checked ----------------------------------------------------------------
+const params = new URLSearchParams(location.search);
+const tune = new Proxy({}, { get: (_, k) => CONFIG[k].value }); // live: tune.speed is CONFIG.speed.value
+const STEP = 1 / 60;            // simulation step in seconds; motion is per second, never per frame
+const W = 360, H = 640;         // logical size: phone portrait
+const PIXEL = false;            // the canvas stays sharp for text; sprites are drawn as crisp pixel blocks
+const P = 3;                    // one sprite pixel = 3 logical units
+const FONT = '"Courier New", ui-monospace, monospace';
+const TITLE = 'Frog Ronin';
+const CONTROLS = ['Tap a card to pick a technique', 'Hold the screen to speed up', 'P: pause   M: mute']; // shown on the title screen
+const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
+const CHEAP = params.get('render') === 'cheap';
+let seed;
+function rng() { // mulberry32; every gameplay random call reads this, never Math.random
+  seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const events = []; // window.game.events: anything the game wants a run to see
+
+// ---- Screen ---------------------------------------------------------------------------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let viewScale = 1;
+function fit() { // fills the window at any size and pixel ratio
+  const k = Math.min(innerWidth / W, innerHeight / H);
+  const s = PIXEL ? Math.max(1, Math.floor(k)) : k;
+  const r = PIXEL ? 1 : s * (devicePixelRatio || 1);
+  viewScale = s;
+  canvas.width = Math.round(W * r); canvas.height = Math.round(H * r);
+  canvas.style.width = Math.round(W * s) + 'px'; canvas.style.height = Math.round(H * s) + 'px';
+  canvas.style.marginTop = Math.max(0, Math.floor((innerHeight - H * s) / 2)) + 'px';
+  canvas.style.imageRendering = 'auto';
+  ctx.setTransform(r, 0, 0, r, 0, 0); ctx.imageSmoothingEnabled = false;
+}
+addEventListener('resize', fit); fit();
+function clear(c) { ctx.fillStyle = c; ctx.fillRect(0, 0, W, H); }
+function text(s, x, y, size, c, align = 'center', bold = true) {
+  ctx.fillStyle = c; ctx.font = `${bold ? 'bold ' : ''}${size}px ${FONT}`; ctx.textAlign = align;
+  ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+}
+function shadowText(s, x, y, size, c, align = 'center') { text(s, x + 2, y + 2, size, '#0d0b16', align); text(s, x, y, size, c, align); }
+function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function panel(x, y, w, h, fill, border) { rect(x, y, w, h, border); rect(x + 3, y + 3, w - 6, h - 6, fill); }
+
+// ---- Input: keys by position (event.code), taps and holds on the canvas -------------------
+const down = new Set(), hit = new Set();
+const pressed = code => hit.has(code); // true for one step after the key goes down
+addEventListener('keydown', e => {
+  startAudio();
+  if (!e.repeat) { down.add(e.code); hit.add(e.code); }
+  if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+});
+addEventListener('keyup', e => down.delete(e.code));
+let taps = [], pointerHeld = false;
+function toLogical(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+}
+canvas.addEventListener('pointerdown', e => { startAudio(); taps.push(toLogical(e)); pointerHeld = true; e.preventDefault(); });
+addEventListener('pointerup', () => { pointerHeld = false; });
+addEventListener('pointercancel', () => { pointerHeld = false; });
+addEventListener('blur', () => { down.clear(); pointerHeld = false; });
+function tapIn(x, y, w, h) { return taps.some(t => t.x >= x && t.x <= x + w && t.y >= y && t.y <= y + h); }
+const anyTap = () => taps.length > 0;
+
+// ---- Audio: started on first input, mute on M --------------------------------------------
+let audio = null, muted = false;
+function startAudio() {
+  if (!audio) {
+    const ac = window.GAME_AUDIO || new (window.AudioContext || window.webkitAudioContext)(); // a check may inject one
+    const out = ac.createGain(); out.gain.value = muted ? 0 : tune.volume;
+    out.connect(ac.destination); audio = { ac, out };
+  }
+  if (audio.ac.state === 'suspended') audio.ac.resume();
+}
+function setMuted(m) { muted = m; if (audio) audio.out.gain.value = m ? 0 : tune.volume; }
+addEventListener('tune', () => setMuted(muted));
+function tone(freq, dur, type = 'square', vol = 0.15, delay = 0) {
+  if (!audio || muted) return;
+  const t = audio.ac.currentTime + delay, o = audio.ac.createOscillator(), g = audio.ac.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(audio.out); o.start(t); o.stop(t + dur);
+}
+const sfx = {
+  hit: () => tone(180 + rng() * 40, 0.06, 'square', 0.08),
+  crit: () => { tone(520, 0.08, 'square', 0.1); tone(780, 0.1, 'square', 0.08, 0.05); },
+  hurt: () => tone(110, 0.12, 'sawtooth', 0.1),
+  dodge: () => tone(900, 0.08, 'triangle', 0.1),
+  coin: () => tone(1320, 0.05, 'square', 0.05),
+  pick: () => { tone(440, 0.06); tone(660, 0.08, 'square', 0.12, 0.06); },
+  combo: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, 'square', 0.12, i * 0.08)),
+  lash: () => tone(300, 0.12, 'triangle', 0.12),
+  croak: () => { tone(90, 0.25, 'sawtooth', 0.14); tone(70, 0.3, 'sawtooth', 0.1, 0.1); },
+  boss: () => { tone(60, 0.5, 'sawtooth', 0.16); tone(45, 0.6, 'sawtooth', 0.12, 0.2); },
+  win: () => [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.25, 'square', 0.12, i * 0.12)),
+  fall: () => [330, 262, 196].forEach((f, i) => tone(f, 0.3, 'triangle', 0.12, i * 0.18)),
+  craft: () => { tone(660, 0.07); tone(990, 0.12, 'square', 0.12, 0.07); },
+};
+
+// ---- Pixel sprites: every figure is a hand-placed grid, drawn as crisp blocks -------------
+const PAL = {
+  K: '#14101e', W: '#ffffff', e: '#14101e',
+  G: '#4cc85a', g: '#2a8a44', H: '#a8f080', Y: '#efe39c', y: '#c4b474', M: '#1a5a30', R: '#e03a3a', r: '#9a1e2e', // frog
+  B: '#3a8ac8', b: '#1e4e86', C: '#9cd6ff',                                   // beetle (blue)
+  w: '#dbe8f2', v: '#8aa0b4', O: '#6e6e80', o: '#3e3e4c', p: '#e0507a', q: '#9a2a48', // mosquito (grey, pink belly)
+  U: '#a060d8', u: '#5a2a8a', V: '#dcb0ff', a: '#8ae06a',                     // spitter (purple, green goo)
+  N: '#e07a2a', n: '#9a4a1a', Q: '#ffbe78', j: '#7ae070',                     // mantis (rust)
+  Z: '#f2c42a', z: '#a87a10', X: '#2a2018', A: '#d8303a', c: '#7e1a24', L: '#fff07a', S: '#c03028', // hornet
+  T: '#ff8fb0', t: '#c0507a',                                                 // tongue
+  D: '#6ab4ff', d: '#2e6ac0',                                                 // rain / water
+  F: '#8a5a2a', f: '#c89a5a', l: '#5ab84a',                                   // twig, leaf
+  I: '#ffe85a', i: '#c8a020',                                                 // firefly / gold
+  E: '#7ae8f0', h: '#3aa0b8',                                                 // bubble
+};
+const SPR = {};
+function sprite(name, rows) {
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const make = white => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const ch = r[i]; if (ch === '.' || ch === ' ') continue; x.fillStyle = white ? '#ffffff' : PAL[ch]; x.fillRect(i, j, 1, 1); } });
+    return c;
+  };
+  SPR[name] = { c: make(false), wc: make(true), w, h };
+}
+function drawSprite(name, x, y, o = {}) {
+  const s = SPR[name], sc = o.scale || P;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  const img = o.white ? s.wc : s.c;
+  if (o.flip) { ctx.translate(Math.round(x + s.w * sc), Math.round(y)); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, s.w * sc, s.h * sc); }
+  else ctx.drawImage(img, Math.round(x), Math.round(y), s.w * sc, s.h * sc);
+  ctx.restore();
+}
+// draw standing on the ground: cx = centre, gy = feet
+function drawFeet(name, cx, gy, o = {}) { const s = SPR[name], sc = o.scale || P; drawSprite(name, cx - s.w * sc / 2, gy - s.h * sc, o); }
+
+sprite('frog', [
+  '......KKKK...KKKK.......',
+  '.....KHWWGK.KHWWGK......',
+  '.....KGWeGKKKGWeGK......',
+  '....KHGGGGGGGGGGGGK.....',
+  '...KHGGGGGGGGGGGGGGK....',
+  'RRKRRRRRRRRRRRRRRRRK....',
+  '.rRKrrrrrrrrrrrrrrrK....',
+  '..KGGGGGGGGGGGGGGGGGK...',
+  '..KGGGGGGGGGGGGMMMMGK...',
+  '..KgGGGGGGGGGGGGGGGgK...',
+  '...KgGGYYYYYYYYYGGgK....',
+  '...KggYYYYYYYYYYYggK....',
+  '..KGGKgYYYYYYYYYygKGK...',
+  '..KGGKgyyyyyyyyyygKGK...',
+  '...KKKggggggggggggKK....',
+  '....KgGGgKKKKKKgGGgK....',
+  '...KGGGGgK....KGGGGgK...',
+  '...KKKKKKK....KKKKKKK...',
+]);
+sprite('beetle', [
+  '......KKKKKKK.......',
+  '....KKCCBBBBBKK.....',
+  '...KCCBBBBBBBBBK....',
+  '..KCBBBBBKBBBBBBK...',
+  'KKKBBBBBBKBBBBBBBK..',
+  'KWKBBBBBBKBBBBBBbK..',
+  'KKKbBBBBBKBBBBBbbK..',
+  '..KbbbbbbKbbbbbbK...',
+  '...KKKKKKKKKKKKK....',
+  '...K.K..K..K..K.....',
+  '..K..K..K..K...K....',
+]);
+const MOSQ = [
+  '......KK...KK.....',
+  '.....KwwK.KwwK....',
+  '.....KwvwKwvwK....',
+  '......KwvKvwK.....',
+  'KKK....KKOKK......',
+  '...KKKKOOOOK......',
+  '.....KOWOOOOK.....',
+  '......KOppppOK....',
+  '.......KppppqoKK..',
+  '........KqqqqK.KK.',
+  '.........KKKK.....',
+  '........K..K......',
+];
+sprite('mosq', MOSQ);
+sprite('mosq2', ['..................'].concat(MOSQ.slice(0, 3).map(r => r.replace(/w/g, 'v')), MOSQ.slice(4)));
+sprite('spit', [
+  '.......KKKKK......',
+  '.....KKVVUUUKK....',
+  '....KVVUUUUUUUK...',
+  'KKKKUUUUUUUUUUUK..',
+  'KaaKUWUUUUUUUUuK..',
+  'KKKKUUUUUUUUUUuK..',
+  '....KuUUUUUUUuuK..',
+  '.....KuuuuuuuuK...',
+  '......KKKKKKKK....',
+  '.......K.K..K.K...',
+]);
+sprite('mantis', [
+  '..KK....................',
+  '.KQNK...................',
+  'KQjeNK..................',
+  'KNNNNK..................',
+  '.KNNK.......KK..........',
+  '..KNNK.....KNNK.........',
+  '..KNNNKKKKKNNK..........',
+  '...KNNNNNNNNNK..........',
+  '..KQNNKNNNNNNNK.........',
+  '.KQK.KKNNNNNNNNK........',
+  'KQK....KNNNNNNNNKK......',
+  'KK.....KnNNNNNNNNNKK....',
+  '........KnnNNNNNNNNNNK..',
+  '.........KKnnnnnnnnnnnK.',
+  '...........KKKKKKKKKKKK.',
+  '...........K...K...K....',
+  '..........K...K.....K...',
+  '.........KK..KK.....KK..',
+]);
+sprite('hornet', [
+  '............L.....L...........',
+  '............LL...LL...........',
+  '..............LLL.............',
+  '...........KKAAAAKK...........',
+  '..........KAAAAAAAAK..........',
+  '.........KAccccccccAK.........',
+  '........KZZKKKKKKKKZZK....KK..',
+  '.......KZWeZZZZZZZZZZK...KwwK.',
+  '.......KZeeZZZZZZZZZZK..KwvvwK',
+  '.......KZZZZZZZZZZZZK..KwvvwK.',
+  '......KKzZZZZZZZZZZzK.KwvvwK..',
+  '........KKzzzzzzzzzKK.KwvK....',
+  '..........KKKKKKKKKKXXXKK.....',
+  '.........KZZZZXXXXZZZZZZKK....',
+  '........KZZZZXXXXZZZZZZZZZK...',
+  '........KXXXXZZZZZXXXXZZZZZK..',
+  '.........KZZZZZZZZZZZXXXXZZZK.',
+  '..........KzzzzXXXXzzzzzzzzzzK',
+  '...........KKzzzzzzzzzzXXXzzK.',
+  '.............KKKzzzzzzzzzzKK..',
+  '................KKKKKKKKKKS...',
+  '..........................SS..',
+  '...........................S..',
+]);
+sprite('coin', ['..KK..', '.KLIK.', 'KLIIiK', 'KLIiiK', '.KiiK.', '..KK..']);
+sprite('goo', ['.KK.', 'KaaK', 'KaaK', '.KK.']);
+sprite('moon', ['...KKKK..', '..KLLLLK.', '.KLLKKK..', '.KLK.....', '.KLK.....', '.KLLKKK..', '..KLLLLK.', '...KKKK..']);
+sprite('bolt', ['..KK', '.KIK', 'KIIK', '.KIK', 'KIK.', 'KK..']);
+sprite('shellback', ['..KKKK..', '.KCBBBK.', 'KCBKBBbK', 'KBBKBbbK', '.KbbbbK.', '..KKKK..']);
+// technique icons (9x9)
+sprite('i_tongue', ['.........', '.KKK.....', 'KGGGK....', 'KGWGKKKK.', 'KGGGTTTTK', '.KKKKKKtK', '......KtK', '.....KTK.', '......K..']);
+sprite('i_leap', ['.........', '..KKKKK..', '.KlllllK.', 'KllGllllK', 'KlllK.llK', 'KllK..lK.', '.KlllllK.', '..KKKKK..', '.........']);
+sprite('i_rain', ['..K......', '.KDK..K..', '.KDK.KDK.', 'KDDDKKDK.', 'KDdDKDDDK', '.KKK.KdDK', '..K...KK.', '.........', '.........']);
+sprite('i_fury', ['.......KK', '......KfK', '.....KFK.', '....KFK..', 'KK.KFK...', 'KlKFK....', '.KFK.....', 'KFK......', 'KK.......']);
+sprite('i_croak', ['.........', '..K...K..', '.K.K.K.K.', 'K.K...K.K', 'K.K.I.K.K', 'K.K...K.K', '.K.K.K.K.', '..K...K..', '.........']);
+sprite('i_spark', ['....K....', '...KIK...', '..KIIIK..', '.KIWIIIK.', 'KIIIiIIIK', '.KIIIIIK.', '..KiiiK..', '...KiK...', '....K....']);
+sprite('i_shell', ['.........', '..KKKKK..', '.KCBBBBK.', 'KCBBKBBbK', 'KBBBKBbbK', 'KBBBKbbbK', '.KbbbbbK.', '..KKKKK..', '.........']);
+sprite('i_bubble', ['..KKKKK..', '.KEEEEEK.', 'KEWWEhhEK', 'KEWEhhhEK', 'KEhhhhhEK', 'KEhhhhhEK', 'KEEhhhEEK', '.KEEEEEK.', '..KKKKK..']);
+// material icons (8x8)
+sprite('m_shell', ['..KKKK..', '.KCBBBK.', 'KCBBKBbK', 'KBBBKbbK', 'KBBbKbbK', '.KbbbbK.', '..KKKK..', '........']);
+sprite('m_wing', ['K.......', 'KwK.....', 'KwwKK...', 'KwvwwKK.', '.KvwwwwK', '..KvvwK.', '...KKK..', '........']);
+sprite('m_goo', ['...K....', '..KaK...', '..KaK...', '.KaaaK..', 'KaWaaaK.', 'KaaaaaK.', '.KaaaK..', '..KKK...']);
+sprite('m_claw', ['.KK.....', 'KQNK....', 'KNNK....', '.KNNK...', '..KNNK.K', '...KNNKN', '....KNNK', '.....KK.']);
+sprite('m_sting', ['....KK..', '...KZZK.', '..KZXXK.', '.KZZZK..', 'KXXZK...', 'KSKK....', 'SK......', '........']);
+
+const MATS = [
+  { id: 'shell', name: 'Shell', icon: 'm_shell' }, { id: 'wing', name: 'Wing', icon: 'm_wing' },
+  { id: 'goo', name: 'Goo', icon: 'm_goo' }, { id: 'claw', name: 'Claw', icon: 'm_claw' }, { id: 'sting', name: 'Sting', icon: 'm_sting' },
+];
+
+// ---- Game data -------------------------------------------------------------------------
+const TECHS = {
+  tongue: { name: 'Tongue Lash', icon: 'i_tongue', desc: l => `Lash 2 bugs for ${tune.lash_dmg * l} every ${tune.lash_cd}s` },
+  leap: { name: 'Lily Leap', icon: 'i_leap', desc: l => `${Math.round(tune.leap_dodge * l * 100)}% dodge; next strike crits` },
+  rain: { name: 'Rain Stance', icon: 'i_rain', desc: l => `Heal ${tune.rain_regen * l} HP/s while fighting` },
+  fury: { name: 'Twig Fury', icon: 'i_fury', desc: l => `Strike ${Math.round(tune.fury_speed * l * 100)}% faster` },
+  croak: { name: 'Croak Shout', icon: 'i_croak', desc: l => `Stun all bugs every ${croakCd(l)}s` },
+  spark: { name: 'Firefly Spark', icon: 'i_spark', desc: l => `Strikes burn ${tune.spark_burn * l}/s for 3s` },
+  shell: { name: 'Shell Guard', icon: 'i_shell', desc: l => `Block ${tune.shell_block * l} damage per hit` },
+  bubble: { name: 'Bubble Shield', icon: 'i_bubble', desc: l => `Absorb ${tune.bubble_shield * l} at each fight start` },
+};
+const croakCd = l => Math.max(2, tune.croak_cd - (l - 1) * 1.5);
+const COMBOS = [
+  { id: 'storm', name: 'STORM TONGUE', a: 'tongue', b: 'rain', desc: 'Lash hits every bug and heals' },
+  { id: 'moon', name: 'MOON LEAP', a: 'leap', b: 'fury', desc: 'After a dodge: a flurry of strikes' },
+  { id: 'thunder', name: 'THUNDER CROAK', a: 'croak', b: 'spark', desc: 'The shout strikes and ignites' },
+  { id: 'fortress', name: 'FORTRESS SHELL', a: 'shell', b: 'bubble', desc: 'Double shield; blocks hit back' },
+  { id: 'mist', name: 'MIST RONIN', a: 'rain', b: 'leap', desc: '+10% dodge; dodging heals' },
+];
+const KINDS = {
+  beetle: { name: 'Beetle', spr: 'beetle', hp: 'beetle_hp', atk: 'beetle_atk', int: 'beetle_int', mat: 'shell', coin: 'coin_beetle' },
+  mosq: { name: 'Mosquito', spr: 'mosq', hp: 'mosq_hp', atk: 'mosq_atk', int: 'mosq_int', mat: 'wing', coin: 'coin_mosq', fly: true },
+  spit: { name: 'Spitter Bug', spr: 'spit', hp: 'spit_hp', atk: 'spit_atk', int: 'spit_int', mat: 'goo', coin: 'coin_spit', ranged: true },
+  mantis: { name: 'Mantis', spr: 'mantis', hp: 'mantis_hp', atk: 'mantis_atk', int: 'mantis_int', mat: 'claw', coin: 'coin_mantis', boss: true },
+  hornet: { name: 'Hornet Shogun', spr: 'hornet', hp: 'hornet_hp', atk: 'hornet_atk', int: 'hornet_int', mat: 'sting', coin: 'coin_hornet', boss: true },
+};
+const NORMAL_STOPS = [['beetle'], ['mosq', 'mosq'], ['beetle', 'spit'], ['mosq', 'beetle'], ['spit', 'spit', 'mosq'],
+  ['beetle', 'beetle'], ['mosq', 'mosq', 'spit'], ['beetle', 'spit', 'mosq'], ['beetle', 'beetle', 'spit'], ['mosq', 'mosq', 'mosq']];
+const midStop = () => Math.round(tune.stops / 2);
+function stopKinds(i) {
+  if (i === tune.stops) return ['hornet'];
+  if (i === midStop()) return ['mantis'];
+  const n = i < midStop() ? i - 1 : i - 2;
+  return NORMAL_STOPS[n % NORMAL_STOPS.length];
+}
+const GEAR = [
+  { id: 'armour', name: 'Lily-Pad Armour', desc: l => `+${tune.armour_hp * l} max HP`, cost: { coins: 30, shell: 4 } },
+  { id: 'spear', name: 'Reed Spear', desc: l => `+${tune.spear_atk * l} strike damage`, cost: { coins: 40, wing: 4, goo: 2 } },
+  { id: 'guard', name: 'Beetle-Shell Guard', desc: l => `Block ${tune.guard_block * l} per hit`, cost: { coins: 45, shell: 5, claw: 1 } },
+];
+const GEAR_MAX = 3;
+function gearCost(g, lvl) { const o = {}; const m = Math.pow(tune.cost_growth, lvl); for (const k in g.cost) o[k] = Math.ceil(g.cost[k] * m); return o; }
+
+// ---- Saved between runs (browser storage; a blocked storage just means no saving) ----------
+const SAVE_KEY = 'frog-ronin-proto-v1';
+function freshMeta() { return { coins: 0, mats: { shell: 0, wing: 0, goo: 0, claw: 0, sting: 0 }, gear: { armour: 0, spear: 0, guard: 0 }, runs: 0, wins: 0, best: 0 }; }
+let meta = freshMeta();
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.mats) meta = Object.assign(freshMeta(), s); } catch (e) { /* no storage */ }
+if (params.get('fresh') === '1') meta = freshMeta();
+function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(meta)); } catch (e) { /* no storage */ } }
+
+// ---- Scenes ------------------------------------------------------------------------------
+let scene, state;
+const FROG_X = 92, GROUND = 432;
+const SLOTS = [232, 282, 330];
+function reset() {
+  seed = Number(params.get('seed')) || CONFIG.seed;
+  const maxHp = tune.frog_hp + meta.gear.armour * tune.armour_hp;
+  state = {
+    t: 0, score: 0, gained: '',
+    stop: 0, cleared: 0, phase: 'walk', phaseT: 0, scroll: 0, speed: 1,
+    frog: { hp: maxHp, max: maxHp, atkT: 0.4, lashT: 1, croakT: 2, shield: 0, critNext: false, moonQ: 0, moonT: 0, swing: 0, flash: 0, hop: 0 },
+    enemies: [], shots: [], fx: [], floaters: [], banner: null,
+    techs: {}, combos: new Set(), picks: 0, offer: null,
+    loot: { coins: 0, shell: 0, wing: 0, goo: 0, claw: 0, sting: 0 }, outcome: null, shake: 0,
+  };
+}
+const lvl = k => state.techs[k] || 0;
+const has = id => state.combos.has(id);
+const alive = () => state.enemies.filter(e => !e.dead);
+function floater(s, x, y, c, size = 16) { state.floaters.push({ s, x, y, c, size, t: 0 }); }
+function banner(textS, sub, color) { state.banner = { text: textS, sub, color, t: 0 }; }
+
+function startStop() {
+  state.stop++;
+  const kinds = stopKinds(state.stop), scale = 1 + tune.enemy_scale * (state.stop - 1);
+  state.enemies = kinds.map((k, i) => {
+    const K = KINDS[k], boss = !!K.boss;
+    const hp = Math.round(CONFIG[K.hp].value * (boss ? 1 : scale));
+    return {
+      kind: k, hp, max: hp, atk: CONFIG[K.atk].value * (boss ? 1 : 1 + tune.enemy_scale * 0.6 * (state.stop - 1)),
+      t: CONFIG[K.int].value * (0.6 + rng() * 0.5), x: W + 40 + i * 50, tx: boss ? 268 : SLOTS[i], stun: 0, burn: 0, burnDps: 0,
+      flash: 0, lunge: 0, hits: 0, dead: false, deadT: 0, bob: rng() * 6,
+    };
+  });
+  const f = state.frog;
+  f.shield = lvl('bubble') ? tune.bubble_shield * lvl('bubble') * (has('fortress') ? 2 : 1) : 0;
+  f.atkT = 0.5; f.lashT = Math.min(f.lashT, 1.2); f.croakT = Math.min(f.croakT, 2.5);
+  state.phase = 'fight'; state.phaseT = 0;
+  if (kinds[0] === 'mantis') { banner('MANTIS', 'mini-boss', '#ffbe78'); sfx.boss(); }
+  if (kinds[0] === 'hornet') { banner('HORNET SHOGUN', 'the pond boss', '#f2c42a'); sfx.boss(); }
+  events.push({ type: 'stop', stop: state.stop, kinds });
+}
+
+function makeOffer() {
+  if (state.picks === 0) return ['tongue', 'leap', 'rain'];
+  const held = state.techs;
+  const avail = Object.keys(TECHS).filter(k => (held[k] || 0) < 3);
+  const makers = avail.filter(k => COMBOS.some(c => !has(c.id) && ((c.a === k && held[c.b]) || (c.b === k && held[c.a]))));
+  const out = [];
+  if (makers.length) out.push(makers[Math.floor(rng() * makers.length)]);
+  const rest = avail.filter(k => !out.includes(k));
+  while (out.length < 3 && rest.length) out.push(rest.splice(Math.floor(rng() * rest.length), 1)[0]);
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+function comboFor(k) { // the combo this technique would complete now, or the one it belongs to
+  for (const c of COMBOS) {
+    if (has(c.id)) continue;
+    const partner = c.a === k ? c.b : c.b === k ? c.a : null;
+    if (partner && lvl(partner)) return { c, partner, ready: true };
+  }
+  for (const c of COMBOS) {
+    if (has(c.id)) continue;
+    const partner = c.a === k ? c.b : c.b === k ? c.a : null;
+    if (partner) return { c, partner, ready: false };
+  }
+  return null;
+}
+function choose(k) {
+  state.techs[k] = (state.techs[k] || 0) + 1; state.picks++; sfx.pick();
+  events.push({ type: 'pick', tech: k, level: state.techs[k] });
+  for (const c of COMBOS) {
+    if (!has(c.id) && lvl(c.a) && lvl(c.b)) {
+      state.combos.add(c.id); banner(c.name, c.desc, '#fff07a'); sfx.combo();
+      events.push({ type: 'combo', combo: c.id });
+    }
+  }
+  if (k === 'bubble') state.frog.shield = Math.max(state.frog.shield, tune.bubble_shield * lvl('bubble') * (has('fortress') ? 2 : 1));
+  state.offer = null; state.phase = 'walk'; state.phaseT = 0;
+}
+
+// ---- Combat ------------------------------------------------------------------------------
+function enemyPos(e) {
+  const K = KINDS[e.kind];
+  let y = GROUND;
+  if (K.fly) y = GROUND - 70 + Math.sin(state.t * 4 + e.bob) * 8;
+  return { x: e.x - (e.lunge > 0 ? 22 * Math.sin(e.lunge / 0.18 * Math.PI) : 0), y };
+}
+function damageEnemy(e, dmg, color = '#ffffff', size = 16) {
+  if (e.dead) return;
+  dmg = Math.max(1, Math.round(dmg));
+  e.hp -= dmg; e.flash = 0.1;
+  const p = enemyPos(e); floater(String(dmg), p.x + (rng() * 16 - 8), p.y - SPR[KINDS[e.kind].spr].h * P - 6, color, size);
+  if (e.hp <= 0) killEnemy(e);
+}
+function killEnemy(e) {
+  e.dead = true; e.deadT = 0;
+  const K = KINDS[e.kind], coins = CONFIG[K.coin].value;
+  state.loot.coins += coins; state.loot[K.mat] += 1; state.score += coins;
+  const p = enemyPos(e);
+  for (let i = 0; i < Math.min(6, 1 + Math.floor(coins / 5)); i++) state.fx.push({ type: 'coin', x: p.x, y: p.y - 30, vx: (rng() - 0.5) * 120, vy: -150 - rng() * 80, t: 0 });
+  floater(`+${coins}`, p.x, p.y - 70, '#f2c42a', 18); sfx.coin();
+  events.push({ type: 'kill', kind: e.kind });
+}
+function strike(bonus = 1) {
+  const target = alive()[0]; if (!target) return;
+  const f = state.frog; f.swing = 0.18;
+  const crit = f.critNext; f.critNext = false;
+  if (target.kind === 'mosq' && rng() < tune.mosq_dodge && !crit) { const p = enemyPos(target); floater('miss', p.x, p.y - 50, '#9aa0b4', 14); return; }
+  let dmg = (tune.frog_atk + meta.gear.spear * tune.spear_atk) * bonus * (crit ? 2 : 1);
+  if (target.kind === 'beetle') dmg -= tune.beetle_armor;
+  damageEnemy(target, dmg, crit ? '#fff07a' : '#ffffff', crit ? 22 : 16);
+  if (lvl('spark')) { target.burn = 3; target.burnDps = tune.spark_burn * lvl('spark'); }
+  const p = enemyPos(target); state.fx.push({ type: 'spark', x: p.x - 20, y: p.y - 30, t: 0 });
+  crit ? sfx.crit() : sfx.hit();
+}
+function lash() {
+  const targets = has('storm') ? alive() : alive().slice(0, 2);
+  if (!targets.length) return;
+  state.fx.push({ type: 'tongue', targets: targets.map(e => enemyPos(e)), t: 0, storm: has('storm') });
+  for (const e of targets) {
+    damageEnemy(e, tune.lash_dmg * lvl('tongue'), '#ff8fb0', 16);
+    if (has('storm')) healFrog(tune.storm_heal);
+  }
+  sfx.lash();
+}
+function croak() {
+  const targets = alive(); if (!targets.length) return;
+  state.fx.push({ type: 'ring', t: 0, thunder: has('thunder') });
+  for (const e of targets) {
+    e.stun = tune.croak_stun;
+    if (has('thunder')) { damageEnemy(e, tune.thunder_dmg, '#fff07a', 18); e.burn = 3; e.burnDps = Math.max(e.burnDps, tune.spark_burn * Math.max(1, lvl('spark'))); }
+  }
+  floater('CROAK!', FROG_X + 20, GROUND - 90, '#ffe85a', 16); sfx.croak();
+}
+function healFrog(n) { const f = state.frog; const before = f.hp; f.hp = Math.min(f.max, f.hp + n); return f.hp - before; }
+function hitFrog(raw, src) {
+  const f = state.frog;
+  const dodge = Math.min(0.6, tune.leap_dodge * lvl('leap') + (has('mist') ? 0.1 : 0));
+  if (dodge > 0 && rng() < dodge) {
+    f.critNext = true; f.hop = 0.3; floater('DODGE', FROG_X, GROUND - 80, '#9cd6ff', 16); sfx.dodge();
+    if (has('moon')) { f.moonQ = tune.moon_hits; f.moonT = 0.05; }
+    if (has('mist')) healFrog(tune.mist_heal);
+    return;
+  }
+  const block = tune.shell_block * lvl('shell') + tune.guard_block * meta.gear.guard;
+  let dmg = Math.max(1, Math.round(raw - block));
+  if (has('fortress') && block > 0 && src && !src.dead) damageEnemy(src, Math.max(1, Math.min(raw, block) * tune.fortress_reflect * 3), '#9cd6ff', 14);
+  if (f.shield > 0) { const a = Math.min(f.shield, dmg); f.shield -= a; dmg -= a; if (a) floater(`(${Math.round(a)})`, FROG_X - 26, GROUND - 70, '#7ae8f0', 14); }
+  if (dmg <= 0) return;
+  f.hp -= dmg; f.flash = 0.12; state.shake = 0.15;
+  floater(`-${dmg}`, FROG_X + 8, GROUND - 74, '#ff6a6a', 18); sfx.hurt();
+  if (f.hp <= 0) { f.hp = 0; endRun(false); }
+}
+function enemyAttack(e) {
+  const K = KINDS[e.kind];
+  e.hits++;
+  if (K.ranged) { const p = enemyPos(e); state.shots.push({ x: p.x - 30, y: p.y - 26, t: 0, dmg: e.atk, src: e }); e.lunge = 0.12; return; }
+  e.lunge = 0.18;
+  if (e.kind === 'mantis' && e.hits % 4 === 0) { hitFrog(e.atk, e); if (state.phase === 'fight') hitFrog(e.atk, e); floater('DOUBLE SLASH', 200, GROUND - 130, '#ffbe78', 14); return; }
+  if (e.kind === 'hornet' && e.hits % 5 === 0) { for (let i = 0; i < 3 && state.phase === 'fight'; i++) hitFrog(e.atk * 0.6, e); floater('STINGER BARRAGE', 200, GROUND - 150, '#f2c42a', 14); return; }
+  hitFrog(e.atk, e);
+}
+function fightStep(dt) {
+  const f = state.frog;
+  if (lvl('rain')) healFrog(tune.rain_regen * lvl('rain') * dt);
+  f.atkT -= dt;
+  const interval = tune.frog_atk_interval / (1 + tune.fury_speed * lvl('fury'));
+  if (f.atkT <= 0) { f.atkT += interval; strike(); }
+  if (f.moonQ > 0) { f.moonT -= dt; if (f.moonT <= 0) { f.moonT = 0.1; f.moonQ--; strike(0.8); } }
+  if (lvl('tongue')) { f.lashT -= dt; if (f.lashT <= 0) { f.lashT = tune.lash_cd; lash(); } }
+  if (lvl('croak')) { f.croakT -= dt; if (f.croakT <= 0) { f.croakT = croakCd(lvl('croak')); croak(); } }
+  for (const e of state.enemies) {
+    if (e.dead) { e.deadT += dt; continue; }
+    if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + e.burnDps * dt; if (e.burnAcc >= 1) { const d = Math.floor(e.burnAcc); e.burnAcc -= d; damageEnemy(e, d, '#ffa040', 12); } }
+    if (e.dead) continue;
+    if (e.stun > 0) { e.stun -= dt; continue; }
+    e.t -= dt;
+    const rage = e.kind === 'hornet' && e.hp < e.max / 2 ? tune.hornet_rage : 1;
+    if (e.t <= 0) { e.t += CONFIG[KINDS[e.kind].int].value / rage; enemyAttack(e); if (state.phase !== 'fight') return; }
+  }
+  for (const s of state.shots) {
+    s.t += dt;
+    if (s.t >= tune.spit_travel && !s.done) { s.done = true; hitFrog(s.dmg, s.src); if (state.phase !== 'fight') return; }
+  }
+  state.shots = state.shots.filter(s => !s.done);
+  if (!alive().length) {
+    state.phaseT += dt;
+    if (state.phaseT > 0.7) stopCleared();
+  }
+}
+function stopCleared() {
+  state.cleared++;
+  healFrog(state.frog.max * tune.heal_between);
+  state.enemies = []; state.shots = [];
+  if (state.stop >= tune.stops) { endRun(true); return; }
+  if (state.cleared % tune.pick_every === 0) { state.phase = 'pick'; state.offer = makeOffer(); state.phaseT = 0; }
+  else { state.phase = 'walk'; state.phaseT = 0; }
+}
+function endRun(win) {
+  state.phase = 'end'; state.outcome = win ? 'win' : 'fall';
+  meta.coins += state.loot.coins; for (const m of MATS) meta.mats[m.id] += state.loot[m.id];
+  meta.runs++; if (win) meta.wins++; meta.best = Math.max(meta.best, state.stop);
+  saveMeta();
+  state.gained = win ? 'POND LEGEND!' : 'The frog falls...';
+  win ? sfx.win() : sfx.fall();
+  events.push({ type: 'end', outcome: state.outcome, stop: state.stop, t: state.t });
+  state.endT = 0;
+}
+
+// ---- Drawing -------------------------------------------------------------------------------
+function drawWorld(scroll) {
+  // dusk sky in bands (muted: the units and rewards must outshine it)
+  const bands = ['#1b1730', '#221d3a', '#2a2445', '#332b50', '#3c3258'];
+  for (let i = 0; i < bands.length; i++) rect(0, i * 60, W, 60, bands[i]);
+  drawSprite('moon', 286, 84, { scale: 4, alpha: 0.85 });
+  // far reeds (slow parallax)
+  for (let i = -1; i < 14; i++) {
+    const x = ((i * 30 - scroll * 0.2) % 420 + 420) % 420 - 30;
+    const h = 30 + ((i * 37) % 4) * 9;
+    rect(x, 300 - h, 6, h, '#262b3e'); rect(x + 9, 300 - h + 15, 6, h - 15, '#262b3e');
+  }
+  // pond water
+  rect(0, 300, W, 66, '#2b4a52');
+  for (let i = 0; i < 12; i++) {
+    const x = ((i * 47 - scroll * 0.5) % 400 + 400) % 400 - 20;
+    rect(x, 312 + (i % 3) * 18, 18, 3, '#3e6668');
+  }
+  // lily pads on the water
+  for (let i = 0; i < 4; i++) {
+    const x = ((i * 110 - scroll * 0.5 + 40) % 440 + 440) % 440 - 40;
+    rect(x, 336 + (i % 2) * 12, 27, 6, '#2f5a3a'); rect(x + 3, 333 + (i % 2) * 12, 21, 3, '#3c6e44');
+  }
+  // bank and path
+  rect(0, 366, W, 12, '#3a5a34'); rect(0, 378, W, 6, '#2e4a2c');
+  rect(0, 384, W, 66, '#4a3e33');
+  for (let i = 0; i < 18; i++) {
+    const x = ((i * 29 - scroll) % 380 + 380) % 380 - 10;
+    rect(x, 396 + (i * 13) % 42, 6, 3, '#5c4e40');
+  }
+  rect(0, 450, W, 9, '#2e4a2c');
+  // near cattails in front of the water
+  for (let i = 0; i < 7; i++) {
+    const x = ((i * 64 - scroll * 1.1 + 20) % 450 + 450) % 450 - 30;
+    rect(x, 318, 3, 54, '#33502e'); rect(x - 3, 318, 9, 15, '#5a3a28'); rect(x - 3, 318, 3, 15, '#3e281c');
+  }
+}
+function drawFrog(gy) {
+  const f = state.frog, t = state.t;
+  let y = gy;
+  if (state.phase === 'walk') y -= Math.abs(Math.sin(t * 7)) * 9;
+  else y -= Math.round(Math.sin(t * 2.5) * 1.5) * P / 3;
+  if (f.hop > 0) y -= Math.sin(f.hop / 0.3 * Math.PI) * 26;
+  const s = SPR.frog, x0 = FROG_X - s.w * P / 2, y0 = y - s.h * P;
+  // combo looks
+  if (has('mist')) for (let i = 0; i < 5; i++) rect(x0 - 6 + ((t * 20 + i * 17) % 80), gy - 6 - (i % 2) * 6, 12, 3, 'rgba(200,220,240,0.35)');
+  if (has('fortress')) drawSprite('shellback', x0 - 12, y0 + 27);
+  drawSprite('frog', x0, y0, { white: f.flash > 0 });
+  if (has('moon')) drawSprite('moon', x0 + 24, y0 - 24);
+  if (has('thunder')) drawSprite('bolt', x0 + 54, y0 + 6);
+  if (has('storm')) for (let i = 0; i < 3; i++) { const a = t * 3 + i * 2.1; rect(FROG_X + Math.cos(a) * 40, y0 + 24 + Math.sin(a) * 20, 6, 6, '#6ab4ff'); }
+  // twig sword: rests angled up, swings forward
+  const ang = f.swing > 0 ? -0.2 + (1 - f.swing / 0.18) * 0.9 : -1.0;
+  const hx = x0 + 19 * P, hy = y0 + 12 * P;
+  for (let i = 0; i < 10; i++) {
+    const px = hx + Math.cos(ang) * i * P, py = hy + Math.sin(ang) * i * P;
+    rect(Math.round(px / P) * P, Math.round(py / P) * P, P, P, i > 7 ? '#c89a5a' : '#8a5a2a');
+  }
+  const lx = hx + Math.cos(ang) * 6 * P, ly = hy + Math.sin(ang) * 6 * P;
+  rect(Math.round(lx / P) * P - P, Math.round(ly / P) * P - P, P, P, '#5ab84a');
+  if (f.shield > 0) { ctx.strokeStyle = 'rgba(122,232,240,0.7)'; ctx.lineWidth = 3; ctx.strokeRect(x0 - 6, y0 - 6, s.w * P + 12, s.h * P + 12); }
+}
+function drawEnemy(e) {
+  const K = KINDS[e.kind], p = enemyPos(e);
+  let name = K.spr;
+  if (e.kind === 'mosq' && Math.floor(state.t * 12 + e.bob) % 2) name = 'mosq2';
+  const alpha = e.dead ? Math.max(0, 1 - e.deadT / 0.4) : 1;
+  drawFeet(name, p.x, p.y, { white: e.flash > 0, alpha });
+  if (e.dead) return;
+  const s = SPR[name], top = p.y - s.h * P;
+  if (e.stun > 0) text('zz', p.x + 20, top - 6, 14, '#ffe85a');
+  if (e.burn > 0) rect(p.x - 6 + Math.sin(state.t * 20) * 6, top - 3, 6, 6, '#ffa040');
+  if (!K.boss) { // small HP bar
+    rect(p.x - 21, top - 14, 42, 6, '#14101e'); rect(p.x - 20, top - 13, 40 * Math.max(0, e.hp / e.max), 4, '#e0507a');
+  }
+}
+function drawHud() {
+  const f = state.frog;
+  rect(0, 0, W, 64, 'rgba(13,11,22,0.85)');
+  text(`STOP ${Math.min(state.stop, tune.stops)}/${tune.stops}`, 12, 18, 16, '#efe39c', 'left');
+  const tt = Math.floor(state.t); text(`${Math.floor(tt / 60)}:${String(tt % 60).padStart(2, '0')}`, 168, 18, 16, '#c8c0e0');
+  drawSprite('coin', 214, 9, { scale: 3 }); text(String(state.loot.coins), 238, 18, 16, '#f2c42a', 'left');
+  // pause and mute buttons
+  panel(296, 4, 28, 28, '#2a2445', '#4a3f6e'); rect(305, 11, 4, 14, '#efe39c'); rect(312, 11, 4, 14, '#efe39c');
+  panel(328, 4, 28, 28, '#2a2445', '#4a3f6e'); rect(334, 14, 5, 8, '#efe39c'); rect(339, 11, 4, 14, '#efe39c');
+  if (muted) { rect(346, 12, 3, 12, '#e03a3a'); }
+  // frog HP
+  text('HP', 12, 46, 14, '#a8f080', 'left');
+  rect(40, 38, 220, 16, '#14101e'); rect(42, 40, 216 * f.hp / f.max, 12, '#4cc85a');
+  if (f.shield > 0) rect(42, 40, Math.min(216, 216 * f.shield / f.max), 4, '#7ae8f0');
+  text(`${Math.ceil(f.hp)}/${f.max}`, 268, 46, 14, '#ffffff', 'left');
+  // boss bar
+  const boss = state.enemies.find(e => KINDS[e.kind].boss && !e.dead);
+  if (boss) {
+    rect(20, 74, 320, 36, 'rgba(13,11,22,0.8)');
+    text(KINDS[boss.kind].name.toUpperCase(), 180, 84, 14, boss.kind === 'hornet' ? '#f2c42a' : '#ffbe78');
+    rect(30, 94, 300, 10, '#14101e'); rect(31, 95, 298 * Math.max(0, boss.hp / boss.max), 8, '#e03a3a');
+  }
+  // technique tray
+  rect(0, 470, W, 170, '#14101e');
+  rect(0, 470, W, 3, '#3c3258');
+  text('TECHNIQUES', 12, 488, 14, '#8a80aa', 'left');
+  const ks = Object.keys(state.techs);
+  if (!ks.length) text('first pick after 2 stops', 12, 512, 14, '#6a6090', 'left', false);
+  ks.forEach((k, i) => {
+    const x = 12 + (i % 4) * 86, y = 500 + Math.floor(i / 4) * 34;
+    drawSprite(TECHS[k].icon, x, y, { scale: 3 });
+    text(`Lv${state.techs[k]}`, x + 32, y + 13, 14, '#efe39c', 'left');
+  });
+  let cy = 574;
+  if (state.combos.size) text('COMBOS', 12, cy, 14, '#8a80aa', 'left');
+  [...state.combos].forEach((id, i) => { const c = COMBOS.find(c => c.id === id); text(c.name, 88 + (i % 2) * 140, cy + Math.floor(i / 2) * 20, 14, '#fff07a', 'left'); });
+  text(state.speed > 1 ? `SPEED x${tune.speedup}` : 'hold screen: speed up', W / 2, 626, 14, state.speed > 1 ? '#f2c42a' : '#6a6090');
+}
+function drawFx(dt) {
+  for (const fx of state.fx) {
+    fx.t += dt;
+    if (fx.type === 'spark') { const k = fx.t / 0.15; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + 0.6; rect(fx.x + Math.cos(a) * k * 18, fx.y + Math.sin(a) * k * 18, 6, 6, '#ffffff'); } }
+    if (fx.type === 'tongue') {
+      const k = Math.min(1, fx.t / 0.08);
+      for (const p of fx.targets) {
+        const sx = FROG_X + 24, sy = GROUND - 30, ex = sx + (p.x - 30 - sx) * k, ey = sy + (p.y - 24 - sy) * k;
+        ctx.strokeStyle = fx.storm ? '#6ab4ff' : '#ff8fb0'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+        rect(ex - 6, ey - 6, 12, 12, fx.storm ? '#c8e4ff' : '#ff8fb0');
+      }
+    }
+    if (fx.type === 'ring') { const r = fx.t * 520; ctx.strokeStyle = fx.thunder ? 'rgba(255,232,90,0.8)' : 'rgba(255,232,90,0.5)'; ctx.lineWidth = 6; ctx.strokeRect(FROG_X - r, GROUND - 40 - r * 0.5, r * 2, r); }
+    if (fx.type === 'coin') { fx.vy += 520 * dt; fx.x += fx.vx * dt; fx.y += fx.vy * dt; drawSprite('coin', fx.x, Math.min(fx.y, GROUND - 18), { scale: 3 }); }
+  }
+  state.fx = state.fx.filter(f => f.t < (f.type === 'coin' ? 0.8 : f.type === 'ring' ? 0.35 : 0.25));
+  for (const fl of state.floaters) { fl.t += dt; shadowText(fl.s, fl.x, fl.y - fl.t * 50, fl.size, fl.c); }
+  state.floaters = state.floaters.filter(f => f.t < 0.9);
+  for (const s of state.shots) { const k = s.t / tune.spit_travel; drawSprite('goo', s.x + (FROG_X + 30 - s.x) * k, s.y - Math.sin(k * Math.PI) * 30 + (GROUND - 40 - s.y) * k, { scale: 3 }); }
+}
+function drawBanner(dt) {
+  const b = state.banner; if (!b) return;
+  b.t += dt;
+  if (b.t > 2.2) { state.banner = null; return; }
+  const a = Math.min(1, b.t / 0.15, (2.2 - b.t) / 0.3);
+  ctx.save(); ctx.globalAlpha = a;
+  rect(0, 160, W, 86, 'rgba(13,11,22,0.85)'); rect(0, 160, W, 3, b.color); rect(0, 243, W, 3, b.color);
+  shadowText(b.text, W / 2, 192, b.text.length > 13 ? 26 : 32, b.color);
+  text(b.sub, W / 2, 226, 14, '#e8e0ff', 'center', false);
+  ctx.restore();
+}
+function cardRect(i) { return { x: 18, y: 168 + i * 128, w: 324, h: 116 }; }
+function drawPick() {
+  rect(0, 0, W, H, 'rgba(13,11,22,0.78)');
+  shadowText('CHOOSE A TECHNIQUE', W / 2, 140, 20, '#efe39c');
+  state.offer.forEach((k, i) => {
+    const r = cardRect(i), T = TECHS[k], cur = lvl(k), cb = comboFor(k);
+    panel(r.x, r.y, r.w, r.h, '#221d3a', cb && cb.ready ? '#f2c42a' : '#4a3f6e');
+    drawSprite(T.icon, r.x + 14, r.y + 18, { scale: 5 });
+    text(T.name, r.x + 74, r.y + 24, 18, '#ffffff', 'left');
+    text(cur ? `Lv${cur} > Lv${cur + 1}` : 'NEW', r.x + r.w - 14, r.y + 24, 14, cur ? '#a8f080' : '#9cd6ff', 'right');
+    text(T.desc(cur + 1), r.x + 74, r.y + 52, 14, '#d8d0f0', 'left', false);
+    if (cb) {
+      if (cb.ready) { rect(r.x + 10, r.y + 72, r.w - 20, 32, '#3a2f12'); text(`+ ${TECHS[cb.partner].name} = ${cb.c.name}`, r.x + 18, r.y + 88, 14, '#fff07a', 'left'); }
+      else text(`combo: ${TECHS[cb.partner].name} > ${cb.c.name}`, r.x + 18, r.y + 88, 13, '#8a80aa', 'left', false);
+    }
+    text(String(i + 1), r.x + 30, r.y + r.h - 16, 12, '#6a6090');
+  });
+}
+
+// ---- Scenes --------------------------------------------------------------------------------
+let fxDt = 0;
+const scenes = {
+  figures: {
+    update(dt) { state.t += dt; },
+    draw() {
+      drawWorld(0); rect(0, 0, W, H, 'rgba(13,11,22,0.45)');
+      text('FIGURES', W / 2, 26, 18, '#efe39c');
+      const row = (list, gy) => list.forEach(([n, label, x]) => { drawFeet(n, x, gy); text(label, x, gy + 16, 14, '#ffffff'); });
+      row([['frog', 'Frog Ronin', 70], ['beetle', 'Beetle', 180], ['mosq', 'Mosquito', 290]], 180);
+      row([['spit', 'Spitter Bug', 90], ['mantis', 'Mantis', 250]], 360);
+      row([['hornet', 'Hornet Shogun', 180]], 580);
+    },
+  },
+  title: {
+    update() {
+      if (pressed('Enter') || pressed('Space') || anyTap()) { if (meta.runs > 0) scene = 'camp'; else { reset(); scene = 'play'; } }
+    },
+    draw() {
+      drawWorld(state ? state.t * 20 : 0);
+      rect(0, 0, W, H, 'rgba(13,11,22,0.35)');
+      shadowText('FROG', W / 2, 120, 52, '#a8f080'); shadowText('RONIN', W / 2, 174, 52, '#e03a3a');
+      drawFeet('frog', W / 2, 360, { scale: 6 });
+      panel(30, 452, 300, 116, '#1b1730', '#4a3f6e');
+      CONTROLS.forEach((c, i) => text(c, W / 2, 478 + i * 30, 14, '#d8d0f0', 'center', false));
+      text(meta.runs ? `Runs ${meta.runs}   Wins ${meta.wins}` : 'Become the legend of the pond', W / 2, 590, 14, '#8a80aa');
+      text('TAP TO BEGIN', W / 2, 620, 18, Math.floor(clock.now() * 2) % 2 ? '#fff07a' : '#efe39c');
+    },
+  },
+  play: {
+    update(dt) {
+      if (pressed('KeyP') || pressed('Escape') || tapIn(296, 4, 28, 28)) { scene = 'pause'; return; }
+      if (tapIn(328, 4, 28, 28)) { setMuted(!muted); taps = []; }
+      if (state.phase === 'pick') {
+        state.speed = 1;
+        state.offer.forEach((k, i) => { const r = cardRect(i); if (pressed('Digit' + (i + 1)) || tapIn(r.x, r.y, r.w, r.h)) { if (state.offer) choose(k); } });
+        state.t += dt; return;
+      }
+      if (state.phase === 'end') {
+        state.endT += dt;
+        if (state.endT > 1.2) scene = 'results';
+        return;
+      }
+      state.speed = (pointerHeld || down.has('Space')) ? tune.speedup : 1;
+      const sdt = dt * state.speed;
+      state.t += sdt; fxDt += sdt;
+      const f = state.frog;
+      f.swing = Math.max(0, f.swing - sdt); f.flash = Math.max(0, f.flash - sdt); f.hop = Math.max(0, f.hop - sdt);
+      state.shake = Math.max(0, state.shake - sdt);
+      for (const e of state.enemies) { e.flash = Math.max(0, e.flash - sdt); e.lunge = Math.max(0, e.lunge - sdt); if (e.x > e.tx) e.x = Math.max(e.tx, e.x - 420 * sdt); }
+      if (state.phase === 'walk') {
+        state.phaseT += sdt; state.scroll += 90 * sdt;
+        if (state.phaseT >= tune.walk_time) startStop();
+      } else if (state.phase === 'fight') {
+        if (state.enemies.every(e => e.x <= e.tx + 1)) fightStep(sdt);
+      }
+    },
+    draw() {
+      const sh = state.shake > 0 ? Math.round(Math.sin(state.t * 90) * 3) : 0;
+      ctx.save(); ctx.translate(sh, 0);
+      drawWorld(state.scroll);
+      for (const e of state.enemies) drawEnemy(e);
+      drawFrog(GROUND);
+      const dt = fxDt; fxDt = 0;
+      drawFx(dt);
+      ctx.restore();
+      drawHud();
+      drawBanner(state.phase === 'pick' ? 0 : dt + (state.phase === 'end' ? 1 / 60 : 0));
+      if (state.phase === 'pick') drawPick();
+      if (state.phase === 'end') shadowText(state.gained, W / 2, 300, 28, state.outcome === 'win' ? '#fff07a' : '#ff8a8a');
+    },
+  },
+  pause: {
+    update() { if (pressed('KeyP') || pressed('Escape') || anyTap()) scene = 'play'; },
+    draw() { scenes.play.draw(); rect(0, 0, W, H, 'rgba(13,11,22,0.6)'); shadowText('PAUSED', W / 2, H / 2 - 20, 36, '#efe39c'); text('tap or P to resume', W / 2, H / 2 + 24, 14, '#d8d0f0'); },
+  },
+  results: {
+    update() { if (pressed('Enter') || pressed('Space') || anyTap()) scene = 'camp'; },
+    draw() {
+      drawWorld(state.scroll); rect(0, 0, W, H, 'rgba(13,11,22,0.7)'); rect(0, 440, W, H - 440, '#0d0b16');
+      const win = state.outcome === 'win';
+      shadowText(win ? 'POND LEGEND!' : 'THE FROG FALLS', W / 2, 110, 30, win ? '#fff07a' : '#ff8a8a');
+      text(win ? 'The Hornet Shogun is defeated.' : `Reached stop ${state.stop} of ${tune.stops}`, W / 2, 150, 14, '#d8d0f0', 'center', false);
+      const tt = Math.floor(state.t); text(`Time ${Math.floor(tt / 60)}:${String(tt % 60).padStart(2, '0')}`, W / 2, 174, 14, '#8a80aa');
+      panel(30, 200, 300, 230, '#1b1730', '#4a3f6e');
+      text('BROUGHT HOME', W / 2, 224, 16, '#efe39c');
+      drawSprite('coin', 70, 246, { scale: 4 }); text(`${state.loot.coins} coins`, 104, 258, 16, '#f2c42a', 'left');
+      MATS.forEach((m, i) => { const y = 290 + i * 26; drawSprite(m.icon, 70, y, { scale: 3 }); text(`${m.name} x${state.loot[m.id]}`, 104, y + 12, 14, '#ffffff', 'left'); });
+      if (state.combos.size) text(`Combos: ${[...state.combos].map(id => COMBOS.find(c => c.id === id).name).join(', ')}`, W / 2, 460, 12, '#fff07a', 'center', false);
+      text(win ? 'Craft stronger gear and run again' : 'Kept everything. Craft gear at the dojo!', W / 2, 500, 14, '#a8f080');
+      text('TAP TO CONTINUE', W / 2, 580, 18, '#efe39c');
+    },
+  },
+  camp: {
+    update() {
+      GEAR.forEach((g, i) => {
+        const r = { x: 18, y: 168 + i * 112, w: 324, h: 100 };
+        if (pressed('Digit' + (i + 1)) || tapIn(r.x, r.y, r.w, r.h)) craft(g);
+      });
+      if (pressed('Enter') || pressed('Space') || tapIn(60, 520, 240, 56)) { reset(); scene = 'play'; }
+    },
+    draw() {
+      drawWorld(0); rect(0, 0, W, H, 'rgba(13,11,22,0.78)');
+      shadowText('DOJO', W / 2, 36, 28, '#efe39c');
+      text('craft gear from bug materials', W / 2, 66, 14, '#8a80aa', 'center', false);
+      drawSprite('coin', 20, 90, { scale: 3 }); text(String(meta.coins), 44, 99, 16, '#f2c42a', 'left');
+      MATS.forEach((m, i) => { const x = 20 + i * 66, y = 120; drawSprite(m.icon, x, y, { scale: 3 }); text(String(meta.mats[m.id]), x + 28, y + 12, 14, '#ffffff', 'left'); });
+      GEAR.forEach((g, i) => {
+        const r = { x: 18, y: 168 + i * 112, w: 324, h: 100 }, l = meta.gear[g.id], maxed = l >= GEAR_MAX;
+        const cost = gearCost(g, l), ok = !maxed && canPay(cost);
+        panel(r.x, r.y, r.w, r.h, '#221d3a', ok ? '#f2c42a' : '#4a3f6e');
+        text(g.name, r.x + 14, r.y + 22, 16, '#ffffff', 'left');
+        for (let k = 0; k < GEAR_MAX; k++) rect(r.x + r.w - 60 + k * 16, r.y + 14, 12, 12, k < l ? '#a8f080' : '#3c3258');
+        text(l ? g.desc(l) + ' now' : 'not crafted yet', r.x + 14, r.y + 46, 14, l ? '#a8f080' : '#8a80aa', 'left', false);
+        if (maxed) text('MASTERED', r.x + 14, r.y + 76, 14, '#fff07a', 'left');
+        else text(`Craft: ${Object.entries(cost).map(([k, v]) => `${v} ${k}`).join(', ')}`, r.x + 14, r.y + 76, 13, ok ? '#fff07a' : '#ff8a8a', 'left', false);
+        text(String(i + 1), r.x + r.w - 14, r.y + r.h - 14, 12, '#6a6090', 'right');
+      });
+      panel(60, 520, 240, 56, '#2f5a3a', '#a8f080');
+      text('START RUN', W / 2, 548, 20, '#ffffff');
+      text(`Runs ${meta.runs}   Wins ${meta.wins}   Best stop ${meta.best}`, W / 2, 604, 13, '#8a80aa', 'center', false);
+    },
+  },
+};
+function canPay(cost) { return Object.entries(cost).every(([k, v]) => (k === 'coins' ? meta.coins : meta.mats[k]) >= v); }
+function craft(g) {
+  const l = meta.gear[g.id]; if (l >= GEAR_MAX) return;
+  const cost = gearCost(g, l); if (!canPay(cost)) return;
+  for (const [k, v] of Object.entries(cost)) { if (k === 'coins') meta.coins -= v; else meta.mats[k] -= v; }
+  meta.gear[g.id]++; saveMeta(); sfx.craft();
+  events.push({ type: 'craft', gear: g.id, level: meta.gear[g.id] });
+}
+
+// ---- Loop: fixed step, frame time clamped ---------------------------------------------
+function step() {
+  if (pressed('KeyM')) { setMuted(!muted); hit.delete('KeyM'); }
+  scenes[scene].update(STEP); hit.clear(); taps = [];
+}
+let last, acc = 0, ALPHA = 1; // ALPHA: how far the frame is between the last two steps
+function tick() {
+  const now = clock.now();
+  acc += Math.min(now - last, 0.25); last = now; // a stall never fast-forwards the game
+  while (acc >= STEP) { step(); acc -= STEP; }
+  ALPHA = acc / STEP;
+  drawFrame();
+}
+function drawFrame() { rect(0, 0, W, H, '#0d0b16'); scenes[scene].draw(); } // clear first: no scene shows the last one through
+function frame() { tick(); requestAnimationFrame(frame); }
+function timer() { if (document.visibilityState === 'visible' && clock.now() - last > 0.1) tick(); }
+
+// ---- What a check can read and drive (?manual=1 stops the loop; players never see it) ----
+window.game = {
+  get scene() { return scene; },
+  get state() { return state; },
+  press(code) { hit.add(code); },
+  hold(code, on) { on ? down.add(code) : down.delete(code); },
+  get events() { return events; },
+  step(n = 1, draw = true, alpha = 1) {
+    for (let i = 0; i < n; i++) step();
+    if (draw) { ALPHA = alpha; drawFrame(); }
+  },
+};
+
+reset();
+scene = params.get('scene') || 'title';
+last = clock.now();
+if (params.get('manual') === '1') drawFrame();
+else { requestAnimationFrame(frame); setInterval(timer, 50); }
+</script>
+</body>
+</html>

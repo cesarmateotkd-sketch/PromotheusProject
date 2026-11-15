@@ -1,0 +1,126 @@
+# The one-shot's small check (check-run/1).
+# Written by one-shot-check.sh --record: the results are /prototype's reading of
+# evidence/self-check.tsv; never edited by hand.
+kind: check-run/1
+engine: web
+browser: "HeadlessChrome/153.0.0.0"
+time: "2026-11-15 22:24:03"
+checks:
+  - id: boots
+    result: pass
+    evidence:
+      - "evidence/self-check.tsv"
+  - id: shot
+    result: not_run
+    mark: not assessed
+    why: "the check runner saved no file; play shots taken separately with Playwright in evidence/"
+    evidence:
+  - id: outlines
+    result: pass
+    evidence:
+      - "evidence/figures.png"
+  - id: brief-words
+    result: pass
+    evidence:
+      - "evidence/brief-words.tsv"
+  - id: emoji
+    result: pass
+    evidence:
+      - "evidence/self-check.tsv"
+  - id: nearest-game
+    result: pass
+    evidence:
+      - "evidence/nearest-game.txt"
+brief_checklist:
+  - id: L1
+    result: pass
+    evidence: "evidence/figures.png"
+    item: "Look: side-view pixel art following `design/art/sprite-style-guide.md`: muted pond-bank backdrop (dusky greens, teal water), a vivid green frog with a red headband and twig sword, each bug one colour family, gold coins and white hit sparks as the most saturated things on screen, 1px near-black outlines on all characters. Signature detail: combos flash their name in a banner and change the frog's look. Every figure drawn, no emoji, no plain circles."
+  - id: L2
+    result: pass
+    evidence: "index.html:390"
+    item: "References: Capybara Go (auto-advance + 1-of-3 picks), Legend of Mushroom (watching duels), Vampire Survivors (evolve recipes shown on cards)."
+  - id: L3
+    result: pass
+    evidence: "evidence/play.png"
+    item: "View: 2D · Camera: static side view; the path scrolls past."
+  - id: F1
+    result: pass
+    evidence: "evidence/play.png"
+    item: "Auto-walking side-view run (~4 min) with health, run timer and stop counter"
+  - id: F2
+    result: pass
+    evidence: "index.html:315"
+    item: "4 bug kinds, each attacking differently: Beetle (tough, slow), Mosquito (fast, weak), Spitter Bug (ranged), Mantis mini-boss; plus the Hornet Shogun boss"
+  - id: F3
+    result: pass
+    evidence: "index.html:390"
+    item: "Pick-1-of-3 technique cards (about 8 techniques), held ones level up"
+  - id: F4
+    result: pass
+    evidence: "evidence/combo.png"
+    item: "4–5 named combos, shown as recipes on the cards, with a banner and a visible change when formed"
+  - id: F5
+    result: pass
+    evidence: "evidence/run1-fall.png"
+    item: "Coins + bug materials earned in the run, kept on a fall"
+  - id: F6
+    result: pass
+    evidence: "evidence/camp.png"
+    item: "Between-runs crafting screen: 3 gear pieces (lily-pad armour, reed spear, beetle-shell guard) that carry over, saved in the browser"
+  - id: F7
+    result: pass
+    evidence: "index.html:764"
+    item: "Tap to speed up fights"
+  - id: S1
+    result: pass
+    evidence: "evidence/play.png"
+    item: "Auto-fight run · in the slice"
+  - id: S2
+    result: pass
+    evidence: "evidence/pick2.png"
+    item: "Technique picks and combos · in the slice"
+  - id: S3
+    result: pass
+    evidence: "evidence/run2-win.png"
+    item: "Boss fight · in the slice"
+  - id: S4
+    result: pass
+    evidence: "evidence/camp.png"
+    item: "Crafting gear from bug materials · thin stand-in"
+  - id: M1
+    result: pass
+    evidence: "evidence/play.png"
+    item: "The frog hops onto the pond path and duels a beetle on his own (tap anything to speed up)."
+  - id: M2
+    result: pass
+    evidence: "evidence/pick1.png"
+    item: "After two fights the first \"choose 1 of 3\" pauses the game: Tongue Lash, Lily Leap, Rain Stance, each card saying what it does."
+  - id: M3
+    result: pass
+    evidence: "evidence/combo.png"
+    item: "The next pick offers a technique whose card shows \"+ Tongue Lash = Storm Tongue\"; taking it fires the first combo banner and his attacks visibly change: the hook pays off."
+  - id: C1
+    result: not_run
+    mark: not assessed
+    why: "Mantis at stop 6 (about 1:30 in the scripted run); whether it feels like real trouble needs a person"
+    evidence: "index.html:327"
+    item: "First real trouble: a Mantis mini-boss around minute 2."
+  - id: C2
+    result: pass
+    evidence: "evidence/run1-fall.png"
+    item: "The Hornet Shogun boss around minute 4 usually beats a first run."
+  - id: C3
+    result: pass
+    evidence: "evidence/run2-win.png"
+    item: "A fall keeps coins and bug materials; crafting one upgrade (e.g. lily-pad armour) makes run 2 winnable."
+  - id: C4
+    result: pass
+    evidence: "index.html:371"
+    item: "Fights get tougher stop by stop."
+measures:
+  - id: step-time
+    value: 1.900
+    unit: ms
+    by: browser
+    detail: "mean 0.018 ms, slowest 1.900 ms, 456 steps"

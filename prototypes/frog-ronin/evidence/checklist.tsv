@@ -1,0 +1,21 @@
+L1	pass	evidence/figures.png	every figure drawn as an outlined pixel sprite; muted pond backdrop, green frog with red headband; combo banner + look change in code index.html:420 and :605
+L2	pass	index.html:390	auto-advance stops, 1-of-3 picks, recipes on cards (index.html:708)
+L3	pass	evidence/play.png	static side view, frog left, beetle right, pond behind; path scrolls in drawWorld index.html:558
+F1	pass	evidence/play.png	HUD shows HP 100/100, timer 0:05, STOP 1/12; run 1 measured 3:06
+F2	pass	index.html:315	beetle armour (:457), mosquito dodge (:455), spitter goo balls (:504), mantis double slash (:506), hornet barrage + rage (:507)
+F3	pass	index.html:390	8 techniques; picking a held one levels it up (index.html:416)
+F4	pass	evidence/combo.png	STORM TONGUE banner with what it does; recipes on cards in evidence/pick2.png
+F5	pass	evidence/run1-fall.png	fall screen lists coins and 5 materials, "Kept everything"
+F6	pass	evidence/camp.png	dojo with 3 gear pieces, costs, levels; saved in localStorage index.html:340
+F7	pass	index.html:764	hold screen or Space runs fights at speedup x
+S1	pass	evidence/play.png	auto-fight; scripted run went stop 1 to 12 with no input but picks
+S2	pass	evidence/pick2.png	1-of-3 cards with combo recipe lines; combos formed in runs (storm, mist, moon)
+S3	pass	evidence/run2-win.png	Hornet Shogun fought at stop 12; POND LEGEND on a win
+S4	pass	evidence/camp.png	crafting armour + spear spent coins and materials and raised levels
+M1	pass	evidence/play.png	stop 1 is a lone beetle duel
+M2	pass	evidence/pick1.png	first pick at stop 2: Tongue Lash, Lily Leap, Rain Stance with text
+M3	pass	evidence/combo.png	second offer showed "+ Tongue Lash = STORM TONGUE" (pick2.png); taking it fired the banner
+C1	not_assessed	index.html:327	Mantis at stop 6 (about 1:30 in the scripted run); whether it feels like real trouble needs a person
+C2	pass	evidence/run1-fall.png	scripted run 1 fell at the Hornet with it on 133/820 HP; "usually" needs more players
+C3	pass	evidence/run2-win.png	after crafting armour + spear (two crafts, not one) scripted run 2 won at 2:43
+C4	pass	index.html:371	enemy HP and attack grow by enemy_scale per stop

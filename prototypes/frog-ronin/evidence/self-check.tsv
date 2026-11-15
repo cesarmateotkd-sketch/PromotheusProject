@@ -1,0 +1,46 @@
+time	2026-11-15 22:24:03
+keep	lines	0	pinned	0
+briefword	pixel art	shown	evidence/figures.png
+briefword	survivors	shown	evidence/play.png
+checklist	L1	unlisted	-	Look: side-view pixel art following `design/art/sprite-style-guide.md`: muted pond-bank backdrop (dusky greens, teal water), a vivid green frog with a red headband and twig sword, each bug one colour family, gold coins and white hit sparks as the most saturated things on screen, 1px near-black outlines on all characters. Signature detail: combos flash their name in a banner and change the frog's look. Every figure drawn, no emoji, no plain circles.	
+checklist	L2	unlisted	-	References: Capybara Go (auto-advance + 1-of-3 picks), Legend of Mushroom (watching duels), Vampire Survivors (evolve recipes shown on cards).	
+checklist	L3	unlisted	-	View: 2D · Camera: static side view; the path scrolls past.	
+checklist	F1	unlisted	-	Auto-walking side-view run (~4 min) with health, run timer and stop counter	
+checklist	F2	unlisted	-	4 bug kinds, each attacking differently: Beetle (tough, slow), Mosquito (fast, weak), Spitter Bug (ranged), Mantis mini-boss; plus the Hornet Shogun boss	
+checklist	F3	unlisted	-	Pick-1-of-3 technique cards (about 8 techniques), held ones level up	
+checklist	F4	unlisted	-	4–5 named combos, shown as recipes on the cards, with a banner and a visible change when formed	
+checklist	F5	unlisted	-	Coins + bug materials earned in the run, kept on a fall	
+checklist	F6	unlisted	-	Between-runs crafting screen: 3 gear pieces (lily-pad armour, reed spear, beetle-shell guard) that carry over, saved in the browser	
+checklist	F7	unlisted	-	Tap to speed up fights	
+checklist	S1	unlisted	-	Auto-fight run · in the slice	
+checklist	S2	unlisted	-	Technique picks and combos · in the slice	
+checklist	S3	unlisted	-	Boss fight · in the slice	
+checklist	S4	unlisted	-	Crafting gear from bug materials · thin stand-in	
+checklist	M1	unlisted	-	The frog hops onto the pond path and duels a beetle on his own (tap anything to speed up).	
+checklist	M2	unlisted	-	After two fights the first "choose 1 of 3" pauses the game: Tongue Lash, Lily Leap, Rain Stance, each card saying what it does.	
+checklist	M3	unlisted	-	The next pick offers a technique whose card shows "+ Tongue Lash = Storm Tongue"; taking it fires the first combo banner and his attacks visibly change: the hook pays off.	
+checklist	C1	unlisted	-	First real trouble: a Mantis mini-boss around minute 2.	
+checklist	C2	unlisted	-	The Hornet Shogun boss around minute 4 usually beats a first run.	
+checklist	C3	unlisted	-	A fall keeps coins and bug materials; crafting one upgrade (e.g. lily-pad armour) makes run 2 winnable.	
+checklist	C4	unlisted	-	Fights get tougher stop by stop.	
+browser	HeadlessChrome/153.0.0.0
+scene	play	0	title
+scene	play	1	play
+digits	log	bold 16px "Courier New", ui-monospace, monospace	tabular	0
+digits	log	bold 14px "Courier New", ui-monospace, monospace	tabular	0
+digits	log	14px "Courier New", ui-monospace, monospace	tabular	0
+digits	log	bold 18px "Courier New", ui-monospace, monospace	tabular	0
+measure	step-time	play	0.018	1.900	456
+lane	play	stop	7.6	203
+uncaught	play	0
+text	play	canvas	561,290,578,303	27.0	3.41	inside	-3
+text	play	canvas	488,9,566,21	25.3	14.84	inside	STOP 2/12
+text	play	canvas	612,10,646,21	25.3	11.10	inside	0:11
+text	play	canvas	692,10,701,20	25.3	11.68	inside	4
+text	play	canvas	488,36,503,45	21.9	14.19	inside	HP
+text	play	canvas	719,35,764,46	21.9	19.30	inside	79/100
+text	play	canvas	488,434,564,446	21.9	5.12	inside	TECHNIQUES
+text	play	canvas	488,455,670,468	21.9	3.29	inside	first pick after 2 stops
+text	play	canvas	560,558,719,570	21.9	3.29	inside	hold screen: speed up
+screen	play	drawn
+responds	changed	244
