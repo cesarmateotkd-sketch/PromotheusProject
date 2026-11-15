@@ -28,6 +28,7 @@ mark superseded items instead.
 | D10 | 2026-11-15 | Mascot: **Frog Ronin** — a small frog with a twig sword who becomes a pond legend; eats defeated bugs to power up; visual upgrade ladder (lily-pad armour → reed spear → dragon-scale samurai) | Chosen from 4 original pitches (Pebble, Toast Knight, Frog Ronin, Cactus Gladiator) | Active |
 | D11 | 2026-11-15 | Tone: **cute but epic** — adorable lead, battles and growth feel genuinely heroic | User choice | Active |
 | D12 | 2026-11-15 | Active play: **roguelite build choices** each run (pick upgrades/skills), progress keeps building while away | Matches Capybara Go-style hits; gives real decisions (D8) | Active |
+| D13 | 2026-11-15 | Core loop **draft** (see R4 "Draft loop"): auto-fight + pick 1-of-3 techniques that combine into combos; ~5-min runs ending in a boss; meta between runs; capped idle "meditation" chest; daily dojo + friend visits; ponds as chapters | Fixes the main critique of the hits (runs without real decisions) while keeping their proven structure | Proposed — refining with user |
 
 ## Open questions (brainstorm order)
 1. ~~Colour psychology for best results~~ → done (R1)
@@ -111,3 +112,35 @@ No frog-samurai / frog-ronin game found. Nearby titles to stay distinct from:
 - Froguelike (Steam bullet-heaven, frog eats bugs) — https://store.steampowered.com/app/2315020/Froguelike/ — overlaps our "eats bugs" idea; keep bug-eating as flavour, not the core hook
 - Ronin: The Last Samurai (Krafton) — samurai roguelike, no frog — https://www.krafton.com/en/games/ronin-the-last-samurai/
 **Takeaway:** frog + ronin + idle roguelite is open; our hook should be the samurai growth fantasy (twig sword → legend), not bug-eating alone.
+
+### R4 — Core loops of the hits (2026-11-15)
+| Game | Core loop | Where retention / revenue lives | Main critique |
+|---|---|---|---|
+| Capybara Go! (Habby) | Tap to advance a "day"; auto events and fights; pick 1-of-3 skills | Meta screen between runs (gear, pets, talents) — "where the real game begins" | Few meaningful decisions per run; skills barely combine; modes are stat checks |
+| Legend of Mushroom | Defeat enemies → near-free gear pulls → equip/sell | Many progression verticals (mounts, relics, skills), each monetised | No "big win" feeling (shard gacha); weak social |
+| Archero (Habby) | Roguelite run: clear rooms, pick skills, die/finish | Hyper-casual core for retention + light RPG meta for monetisation; ~80% D1 at launch | Grind walls; a few dominant skills |
+| AFK Arena / MapleStory Idle | Earn while away into a capped chest (8–24 h) | The full chest is the "appointment"; active progress raises idle rate and idle rewards fund active play | Hard walls that push wait-or-pay |
+| Kongregate idle talks | Prestige = reset with a bonus | Among the best retention on Kongregate | — |
+
+**Key insight:** Habby simplified cores and deepened metas over time; critics everywhere complain runs lack real decisions.
+Our opening: a simple core whose build choices *genuinely combine*, plus a satisfying meta.
+
+**Draft loop (D13, proposed):**
+- 30 s: auto-fight bugs along the pond path; every few fights pick 1 of 3 techniques; techniques combine into named combos
+- Run (~5 min): stage chain ending in a boss; win or fall → gear, coins, bug materials
+- Between runs: gear upgrade ladder (lily-pad armour → reed spear → dragon-scale), permanent techniques, collection
+- Away: capped "meditation" chest; better active progress → faster idle rate (two-way loop)
+- Daily: dojo challenge, boss of the day, friends' frogs visit, gift flies (light social)
+- Long term: ponds as chapters, rank titles (Tadpole → … → Legend), possible prestige reset
+
+Sources:
+- https://medium.com/@shenshenlove/the-habby-formula-gamification-of-growing-and-existing-872072b15acd
+- https://www.gamigion.com/capybara-go-global-launch-ua-case-study/
+- https://minireview.io/adventure/capybara-go
+- https://www.deconstructoroffun.com/blog/2024/4/15/the-magic-of-legend-of-mushroom
+- https://www.deconstructoroffun.com/blog/2019/8/9/why-archero-banked-25m-but-leaves-25m-hanging-hlx9n
+- https://naavik.co/deep-dives/survivorio-archeros-footsteps/
+- https://www.deconstructoroffun.com/blog/2019/6/6/afk-arena-puts-lilith-into-the-billionaire-club
+- https://alexandremacmillan.com/2019/06/13/idle-mechanics-and-monetizing-progession-in-afk-arena/
+- https://archive.org/details/GDC2015Pecorella
+- https://media.gdcvault.com/gdceurope2016/presentations/Pecorella_Anthony_Quest%20for%20Progress.pdf
