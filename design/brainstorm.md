@@ -162,3 +162,11 @@ major art and feel overhaul (graphics "not quite there"). See prototypes/frog-ro
 - Animation: full set: idle, walk, 2-3 strike variants, hurt, dodge, victory; each technique
   gets its own attack animation (also answers "picks felt samey").
 - Reference look: Legend of Mushroom: cute chibi duels, bright effects, readable at a glance.
+
+### D20 — v2 art target (2026-11-15)
+- Finish: render the same frog two ways, pixelated 3D (low-res toon, palette snap, 1px
+  outline) and smooth toon render (cel shading, ink line), side by side; the person picks.
+- Camera: 3/4 side view for the duels.
+- Proportions: heroic chibi, about 3 heads tall (cute but epic, D11).
+- First deliverable: one key art still of a duel (frog vs beetle on the HD-2D pond) to lock
+  the look before any animation.
