@@ -1,0 +1,49 @@
+{
+ "study": "ff6",
+ "files": [
+  "ff6_terra.png"
+ ],
+ "sprites": 34,
+ "sprite_size_median_wh": [
+  19,
+  27
+ ],
+ "colors_per_sprite_median": 11,
+ "palette_total": 97,
+ "light_dir": {
+  "x": -0.0041,
+  "y": 0.0007,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.18,
+  0.4
+ ],
+ "black_outline_share": 0.0,
+ "inner_line_share": 0.255,
+ "one_px_run_share": 0.72,
+ "dither_checker_share": 0.025,
+ "saturation_median": 0.5,
+ "ramp_families_per_sprite": 0.0,
+ "hue_shift_light_minus_dark_deg_median": 7.4,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#181818",
+  "#183058",
+  "#285038",
+  "#f8c088",
+  "#900000",
+  "#80a880",
+  "#c86838",
+  "#0078f8",
+  "#c880f8",
+  "#f8f8d8",
+  "#8058d8",
+  "#b89000",
+  "#70b098",
+  "#588070",
+  "#98e0b0",
+  "#00438c"
+ ]
+}

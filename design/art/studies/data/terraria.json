@@ -1,0 +1,57 @@
+{
+ "study": "terraria",
+ "files": [
+  "Copper_Shortsword.png",
+  "Excalibur.png",
+  "Gold_Broadsword.png",
+  "Iron_Broadsword.png",
+  "Night%27s_Edge.png",
+  "Platinum_Broadsword.png",
+  "Terra_Blade.png",
+  "True_Excalibur.png",
+  "Zenith.png"
+ ],
+ "sprites": 9,
+ "sprite_size_median_wh": [
+  23,
+  24
+ ],
+ "colors_per_sprite_median": 17,
+ "palette_total": 158,
+ "light_dir": {
+  "x": -0.0006,
+  "y": -0.0121,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.17,
+  0.37
+ ],
+ "black_outline_share": 0.07,
+ "inner_line_share": 0.22,
+ "one_px_run_share": 0.91,
+ "dither_checker_share": 0.066,
+ "saturation_median": 0.58,
+ "ramp_families_per_sprite": 2.0,
+ "hue_shift_light_minus_dark_deg_median": 0.0,
+ "semi_alpha_px": 124,
+ "animation": [],
+ "top_colors": [
+  "#3a1e50",
+  "#262457",
+  "#1b1939",
+  "#3d3a7e",
+  "#584903",
+  "#494597",
+  "#3e3300",
+  "#ecc813",
+  "#1b1938",
+  "#8888a0",
+  "#c1a63c",
+  "#000055",
+  "#634abb",
+  "#484972",
+  "#323232",
+  "#181630"
+ ]
+}

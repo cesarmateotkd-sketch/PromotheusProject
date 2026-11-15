@@ -1,0 +1,50 @@
+{
+ "study": "deadcells",
+ "files": [
+  "deadcells2.png",
+  "deadcells_crop.png"
+ ],
+ "sprites": 150,
+ "sprite_size_median_wh": [
+  88,
+  46
+ ],
+ "colors_per_sprite_median": 12,
+ "palette_total": 127,
+ "light_dir": {
+  "x": 0.0016,
+  "y": -0.0006,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.31,
+  0.28
+ ],
+ "black_outline_share": 0.02,
+ "inner_line_share": 0.071,
+ "one_px_run_share": 0.28,
+ "dither_checker_share": 0.004,
+ "saturation_median": 0.49,
+ "ramp_families_per_sprite": 2.0,
+ "hue_shift_light_minus_dark_deg_median": -2.9,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#24525c",
+  "#eba883",
+  "#2b1e34",
+  "#ff0036",
+  "#11203d",
+  "#c61b1b",
+  "#3c495d",
+  "#733a5d",
+  "#650c34",
+  "#93dfe3",
+  "#5f8591",
+  "#ff0054",
+  "#0b1726",
+  "#ff00ff",
+  "#afaa8f",
+  "#5c7890"
+ ]
+}

@@ -1,0 +1,45 @@
+{
+ "study": "idleslayer",
+ "files": [
+  "Bee_1_(1).png",
+  "Bee_2_(1).png",
+  "Bee_5_(2).png"
+ ],
+ "sprites": 3,
+ "sprite_size_median_wh": [
+  32,
+  16
+ ],
+ "colors_per_sprite_median": 10,
+ "palette_total": 10,
+ "light_dir": {
+  "x": -0.0035,
+  "y": -0.0576,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.08,
+  0.48
+ ],
+ "black_outline_share": 0.86,
+ "inner_line_share": 0.279,
+ "one_px_run_share": 0.69,
+ "dither_checker_share": 0.0,
+ "saturation_median": 0.53,
+ "ramp_families_per_sprite": 1.0,
+ "hue_shift_light_minus_dark_deg_median": 4.5,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#151515",
+  "#d7d7d7",
+  "#ad4e1a",
+  "#ffbb31",
+  "#cc8f15",
+  "#7b7b7b",
+  "#5c3c0d",
+  "#0d2030",
+  "#eae4cf",
+  "#c59782"
+ ]
+}

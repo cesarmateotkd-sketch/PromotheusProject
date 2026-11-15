@@ -1,0 +1,60 @@
+{
+ "study": "idleon",
+ "files": [
+  "Archer.png",
+  "Barbarian.png",
+  "Beginner.png",
+  "Bowman.png",
+  "Hunter.png",
+  "Journeyman.png",
+  "Maestro.png",
+  "Mage.png",
+  "Shaman.png",
+  "Squire.png",
+  "Warrior.png",
+  "Wizard.png"
+ ],
+ "sprites": 12,
+ "sprite_size_median_wh": [
+  100,
+  90
+ ],
+ "colors_per_sprite_median": 18,
+ "palette_total": 162,
+ "light_dir": {
+  "x": 0.0,
+  "y": 0.0006,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.0,
+  0.59
+ ],
+ "black_outline_share": 0.86,
+ "inner_line_share": 0.113,
+ "one_px_run_share": 0.48,
+ "dither_checker_share": 0.01,
+ "saturation_median": 0.47,
+ "ramp_families_per_sprite": 2.0,
+ "hue_shift_light_minus_dark_deg_median": 9.1,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#000000",
+  "#fffafa",
+  "#a4eff1",
+  "#8ac8d2",
+  "#ffffff",
+  "#fafaff",
+  "#25172b",
+  "#986233",
+  "#b46a3e",
+  "#48383d",
+  "#6485b4",
+  "#4ed541",
+  "#fffcfc",
+  "#cc8e57",
+  "#7f3b2a",
+  "#9ec0ce"
+ ]
+}

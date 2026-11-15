@@ -1,0 +1,48 @@
+{
+ "study": "eastward",
+ "files": [
+  "eastward_clean.png"
+ ],
+ "sprites": 34,
+ "sprite_size_median_wh": [
+  54,
+  65
+ ],
+ "colors_per_sprite_median": 11,
+ "palette_total": 15,
+ "light_dir": {
+  "x": -0.0001,
+  "y": -0.0076,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.11,
+  0.53
+ ],
+ "black_outline_share": 0.0,
+ "inner_line_share": 0.142,
+ "one_px_run_share": 0.41,
+ "dither_checker_share": 0.003,
+ "saturation_median": 0.53,
+ "ramp_families_per_sprite": 2.0,
+ "hue_shift_light_minus_dark_deg_median": -4.5,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#e86157",
+  "#ffc26e",
+  "#78635a",
+  "#5b3711",
+  "#281913",
+  "#d16b46",
+  "#eedea5",
+  "#89906e",
+  "#c4b479",
+  "#b98b53",
+  "#9d9676",
+  "#fffde7",
+  "#ffffff",
+  "#666886",
+  "#ae702d"
+ ]
+}

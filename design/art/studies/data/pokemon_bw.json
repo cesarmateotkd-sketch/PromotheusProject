@@ -1,0 +1,103 @@
+{
+ "study": "pokemon_bw",
+ "files": [
+  "charizard.gif",
+  "emboar.gif",
+  "lucario.gif",
+  "pikachu.gif",
+  "serperior.gif",
+  "zoroark.gif"
+ ],
+ "sprites": 42,
+ "sprite_size_median_wh": [
+  81,
+  68
+ ],
+ "colors_per_sprite_median": 13,
+ "palette_total": 75,
+ "light_dir": {
+  "x": -0.0022,
+  "y": -0.0065,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.13,
+  0.4
+ ],
+ "black_outline_share": 0.48,
+ "inner_line_share": 0.118,
+ "one_px_run_share": 0.56,
+ "dither_checker_share": 0.01,
+ "saturation_median": 0.64,
+ "ramp_families_per_sprite": 2.0,
+ "hue_shift_light_minus_dark_deg_median": 4.2,
+ "semi_alpha_px": 0,
+ "animation": [
+  {
+   "file": "charizard.gif",
+   "frames": 143,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 10,
+   "foot_shift_px": 0
+  },
+  {
+   "file": "emboar.gif",
+   "frames": 167,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 5,
+   "foot_shift_px": 0
+  },
+  {
+   "file": "lucario.gif",
+   "frames": 143,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 4,
+   "foot_shift_px": 0
+  },
+  {
+   "file": "pikachu.gif",
+   "frames": 112,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 4,
+   "foot_shift_px": 0
+  },
+  {
+   "file": "serperior.gif",
+   "frames": 137,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 6,
+   "foot_shift_px": 2
+  },
+  {
+   "file": "zoroark.gif",
+   "frames": 179,
+   "scale": 1,
+   "median_ms": 50.0,
+   "top_bob_px": 3,
+   "foot_shift_px": 0
+  }
+ ],
+ "top_colors": [
+  "#101010",
+  "#ef8429",
+  "#ce5242",
+  "#313131",
+  "#212121",
+  "#199c4a",
+  "#000000",
+  "#084252",
+  "#efbd08",
+  "#9cd69c",
+  "#7b2942",
+  "#e63129",
+  "#f7e652",
+  "#10733a",
+  "#212131",
+  "#73a573"
+ ]
+}

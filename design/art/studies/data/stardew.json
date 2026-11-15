@@ -1,0 +1,50 @@
+{
+ "study": "stardew",
+ "files": [
+  "stardew_crops.png",
+  "stardew_items.png"
+ ],
+ "sprites": 146,
+ "sprite_size_median_wh": [
+  14,
+  15
+ ],
+ "colors_per_sprite_median": 6,
+ "palette_total": 4325,
+ "light_dir": {
+  "x": 0.0032,
+  "y": -0.0032,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.21,
+  0.4
+ ],
+ "black_outline_share": 0.08,
+ "inner_line_share": 0.134,
+ "one_px_run_share": 0.76,
+ "dither_checker_share": 0.034,
+ "saturation_median": 0.71,
+ "ramp_families_per_sprite": 1.0,
+ "hue_shift_light_minus_dark_deg_median": 0.0,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#9595a2",
+  "#fff9f2",
+  "#8d8d8d",
+  "#381c14",
+  "#133505",
+  "#043718",
+  "#133e2c",
+  "#03322b",
+  "#3a1200",
+  "#95959d",
+  "#27502c",
+  "#6b3410",
+  "#633e34",
+  "#8094a0",
+  "#7a3300",
+  "#784c3e"
+ ]
+}

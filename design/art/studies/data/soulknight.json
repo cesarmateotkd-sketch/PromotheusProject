@@ -1,0 +1,67 @@
+{
+ "study": "soulknight",
+ "files": [
+  "Knight.gif",
+  "Wizard.gif"
+ ],
+ "sprites": 4,
+ "sprite_size_median_wh": [
+  40,
+  40
+ ],
+ "colors_per_sprite_median": 8,
+ "palette_total": 17,
+ "light_dir": {
+  "x": 0.0057,
+  "y": -0.014,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.0,
+  0.31
+ ],
+ "black_outline_share": 1.0,
+ "inner_line_share": 0.173,
+ "one_px_run_share": 0.64,
+ "dither_checker_share": 0.013,
+ "saturation_median": 0.4,
+ "ramp_families_per_sprite": 0.5,
+ "hue_shift_light_minus_dark_deg_median": 0.2,
+ "semi_alpha_px": 0,
+ "animation": [
+  {
+   "file": "Knight.gif",
+   "frames": 2,
+   "scale": 6,
+   "median_ms": 200.0,
+   "top_bob_px": 1,
+   "foot_shift_px": 0
+  },
+  {
+   "file": "Wizard.gif",
+   "frames": 2,
+   "scale": 6,
+   "median_ms": 200.0,
+   "top_bob_px": 1,
+   "foot_shift_px": 0
+  }
+ ],
+ "top_colors": [
+  "#000000",
+  "#1e3053",
+  "#5b5b67",
+  "#89899b",
+  "#2d539d",
+  "#70707f",
+  "#26427a",
+  "#9898b1",
+  "#254176",
+  "#686375",
+  "#878198",
+  "#c6c6db",
+  "#1f3257",
+  "#335db0",
+  "#2a4b8c",
+  "#fb3a3a"
+ ]
+}

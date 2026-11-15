@@ -1,0 +1,49 @@
+{
+ "study": "metalslug_adv",
+ "files": [
+  "msadv_clean.png"
+ ],
+ "sprites": 114,
+ "sprite_size_median_wh": [
+  95,
+  38
+ ],
+ "colors_per_sprite_median": 13,
+ "palette_total": 51,
+ "light_dir": {
+  "x": 0.0027,
+  "y": -0.0059,
+  "note": "negative x = lit from left, negative y = lit from top"
+ },
+ "edge_vs_interior_lum": [
+  0.19,
+  0.45
+ ],
+ "black_outline_share": 0.01,
+ "inner_line_share": 0.189,
+ "one_px_run_share": 0.67,
+ "dither_checker_share": 0.018,
+ "saturation_median": 0.35,
+ "ramp_families_per_sprite": 1.0,
+ "hue_shift_light_minus_dark_deg_median": -9.0,
+ "semi_alpha_px": 0,
+ "animation": [],
+ "top_colors": [
+  "#303030",
+  "#583030",
+  "#887848",
+  "#e0b068",
+  "#484830",
+  "#a06830",
+  "#d0c088",
+  "#485858",
+  "#f8f8a0",
+  "#484890",
+  "#4890c8",
+  "#f8f8f8",
+  "#9090a8",
+  "#585858",
+  "#101000",
+  "#101008"
+ ]
+}
