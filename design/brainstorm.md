@@ -154,3 +154,11 @@ First play of `prototypes/frog-ronin` (tag one-shot/frog-ronin): gameplay works;
 moment was a combo firing; worst was picks feeling samey. Verdict: change direction.
 Keep combo banners, auto-fight duels, pick 1 of 3 and dojo crafting. Change most: a
 major art and feel overhaul (graphics "not quite there"). See prototypes/frog-ronin/PIVOT-NOTE.md.
+
+### D19 — v2 art direction (2026-11-15)
+- Characters large, 96 px+ tall, modelled and animated in 3D (Blender, driven by script/CLI)
+  and rendered to sprites: the pipeline already proven on the ninja studies.
+- Style: HD-2D hybrid: sprite characters over a layered, lit pond backdrop with depth and glow.
+- Animation: full set: idle, walk, 2-3 strike variants, hurt, dodge, victory; each technique
+  gets its own attack animation (also answers "picks felt samey").
+- Reference look: Legend of Mushroom: cute chibi duels, bright effects, readable at a glance.
