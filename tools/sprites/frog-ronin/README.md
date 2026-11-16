@@ -10,3 +10,11 @@ Original models built from primitives in script; no third-party art.
   hit effects. `python3 keyart_post.py OUTDIR` (run from the folder holding `out/`).
 
 Decisions: design/brainstorm.md D19-D22. Approved look: design/art/keyart/frog-ronin-keyart-v2.png.
+
+## Animation frames (12 fps)
+- `common.py` — shared materials and mesh helpers (read by the two scripts below).
+- `anim_build.py` — posable frog (stance, planted feet with 2-bone legs, grip, sword angle,
+  lean, head, tail flutter, grin); renders idle (6), walk (8), strike (8) at 1x in a 256x224
+  cell with the ground fixed. `blender -b --factory-startup --python anim_build.py -- FRAMES [idle,walk,strike]`
+- `anim_post.py` — same pixel finish as the key art; writes `frog_<anim>_sheet.png` (1x strip)
+  and a 3x GIF preview. `python3 anim_post.py FRAMES OUTDIR`
