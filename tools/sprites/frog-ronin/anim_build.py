@@ -11,7 +11,7 @@ for name, col in {"trim": (240, 236, 224), "armor": (176, 44, 52), "mouth": (70,
 
 BASEPOSE = dict(lean=0.12, bob=0.0, head=-0.1, hipz=0.36, ff=(0.5, 0.0), bf=(-0.46, 0.0),
                 grip=(0.44, 0.58), sword=55, tails=0.0, grin=1.0, sq=1.0, eye=0.0,
-                yaw=0.0, dx=0.0, dz=0.0, blink=0.0, happy=0.0)
+                yaw=0.0, dx=0.0, dz=0.0, blink=0.0, happy=0.0, squeeze=0.0)
 
 def build_frog(P):
     made = set(o.name for o in scn.objects)
@@ -49,12 +49,16 @@ def build_frog(P):
             Hh(ball(f"eyew{s}", 0.19, "eyew", (0.17, y * 1.05, HZ + 0.33)))
             Hh(ball(f"pupil{s}", 0.12, "pupil", (0.31, y * 1.05 + 0.01, HZ + 0.32 + P["eye"]), (0.55, 1, 1.2)))
             Hh(ball(f"hi{s}", 0.045, "hilite", (0.375, y * 1.05 - 0.04, HZ + 0.39 + P["eye"]), sub=0))
-        else:  # closed: a dark lid line, arched up when happy, pinched when hurt
-            Hh(ball(f"lid{s}", 0.19, "foot", (0.17, y * 1.05, HZ + 0.33)))
-            arch = 0.1 if P["happy"] else -0.05
-            c0 = Vector((0.34, y * 1.05 - 0.12, HZ + 0.3)); c2 = Vector((0.34, y * 1.05 + 0.12, HZ + 0.3))
-            c1 = Vector((0.39, y * 1.05, HZ + 0.3 + arch))
-            Hh(seg(f"lidl{s}", c0, c1, 0.042, 0.042, "mouth", sub=0, v=6)); Hh(seg(f"lidr{s}", c1, c2, 0.042, 0.042, "mouth", sub=0, v=6))
+        else:  # closed eyes drawn facing the camera: ^ happy, > < squeezed, - blink
+            ec = Vector((0.17, y * 1.05, HZ + 0.33))
+            Hh(ball(f"lid{s}", 0.19, "skin", tuple(ec)))
+            n = Vector((0.866, -0.5, 0.0)); h = Vector((0.5, 0.866, 0.0)); z = Vector((0, 0, 1)); p = ec + n * 0.2
+            if P["happy"]: pts = (p - h * 0.1 - z * 0.035, p + z * 0.06, p + h * 0.1 - z * 0.035)
+            elif P["squeeze"]:
+                k = -s  # near eye '>' , far eye '<'
+                pts = (p - h * 0.08 * k + z * 0.075, p + h * 0.06 * k, p - h * 0.08 * k - z * 0.075)
+            else: pts = (p - h * 0.1, p - z * 0.025, p + h * 0.1)
+            Hh(seg(f"lidl{s}", pts[0], pts[1], 0.036, 0.036, "pupil", sub=0, v=6)); Hh(seg(f"lidr{s}", pts[1], pts[2], 0.036, 0.036, "pupil", sub=0, v=6))
         Hh(seg(f"brow{s}", (0.2, y * 1.05 + 0.11 * s, HZ + 0.54), (0.33, y * 0.7, HZ + 0.46), 0.038, 0.03, "brow"))
     Hh(torus("band", 0.39, 0.045, "band", (0.06, 0, HZ + 0.14), (1.1, 1.0, 1), rot=(0, -0.12, 0)))
     t = P["tails"]
@@ -153,19 +157,21 @@ STRIKE3 = [  # leaping thrust
     P(lean=0.2, sword=26, grip=(0.6, 0.66), dx=0.2, hipz=0.33, ff=(0.6, 0.0), bf=(-0.5, 0.0), head=-0.2, grin=1.2, tails=4.4),
     P(tails=5.2),
 ]
-HURT = [
-    P(lean=-0.3, yaw=0.15, head=0.25, bob=0.03, dx=-0.08, sword=95, grip=(0.3, 0.7), blink=1.0, grin=0.5, ff=(0.4, 0.0), tails=1.0),
-    P(lean=-0.24, yaw=0.1, head=0.2, bob=0.0, dx=-0.14, sword=90, grip=(0.32, 0.66), blink=1.0, grin=0.5, sq=0.94, ff=(0.36, 0.0), bf=(-0.5, 0.0), tails=1.8),
-    P(lean=-0.08, head=0.04, dx=-0.08, sword=70, grip=(0.4, 0.62), grin=0.7, tails=2.6),
-    P(dx=-0.02, tails=3.4),
+HURT = [  # hard knockback: flash, recoil, stagger, recover
+    P(lean=-0.42, yaw=0.2, head=0.4, bob=0.05, dx=-0.16, sword=110, grip=(0.22, 0.76), blink=1.0, squeeze=1.0, grin=0.5, sq=1.06, ff=(0.36, 0.06), tails=1.0),
+    P(lean=-0.48, yaw=0.18, head=0.42, bob=0.02, dx=-0.3, sword=118, grip=(0.2, 0.74), blink=1.0, squeeze=1.0, grin=0.45, sq=0.92, ff=(0.3, 0.0), bf=(-0.56, 0.0), tails=1.8),
+    P(lean=-0.28, yaw=0.1, head=0.2, dx=-0.34, sword=95, grip=(0.3, 0.68), blink=1.0, squeeze=1.0, grin=0.5, sq=0.94, ff=(0.34, 0.0), bf=(-0.56, 0.0), tails=2.6),
+    P(lean=-0.06, head=0.02, dx=-0.3, sword=70, grip=(0.4, 0.62), grin=0.7, tails=3.4),
+    P(dx=-0.28, tails=4.2),
 ]
-DODGE = [  # hop back and land
-    P(lean=0.12, hipz=0.28, sq=0.88, sword=60, head=-0.1, tails=1.0),
-    P(lean=-0.15, dx=-0.17, dz=0.3, hipz=0.44, sq=1.08, ff=(0.3, 0.12), bf=(-0.3, 0.16), sword=80, grip=(0.36, 0.7), head=0.05, tails=2.0, eye=0.02),
-    P(lean=-0.1, dx=-0.28, dz=0.36, hipz=0.42, sq=1.05, ff=(0.28, 0.14), bf=(-0.28, 0.16), sword=78, grip=(0.36, 0.7), head=0.03, tails=2.8),
-    P(lean=0.05, dx=-0.33, dz=0.12, hipz=0.4, ff=(0.4, 0.04), bf=(-0.4, 0.06), sword=66, head=-0.05, tails=3.6),
-    P(lean=0.15, dx=-0.34, hipz=0.28, sq=0.88, sword=58, head=-0.12, tails=4.4),
-    P(dx=-0.34, tails=5.2),
+DODGE = [  # big hop back with a tuck, land and settle
+    P(lean=0.16, hipz=0.26, sq=0.85, sword=60, head=-0.12, tails=1.0),
+    P(lean=-0.25, dx=-0.18, dz=0.42, hipz=0.46, sq=1.12, ff=(0.28, 0.14), bf=(-0.28, 0.18), sword=84, grip=(0.34, 0.72), head=0.06, tails=2.0, eye=0.02),
+    P(lean=-0.32, dx=-0.3, dz=0.58, hipz=0.4, sq=0.95, ff=(0.22, 0.24), bf=(-0.18, 0.26), sword=95, grip=(0.3, 0.74), head=0.08, tails=2.8),
+    P(lean=-0.2, dx=-0.38, dz=0.46, hipz=0.44, sq=1.05, ff=(0.3, 0.12), bf=(-0.3, 0.14), sword=86, grip=(0.34, 0.72), head=0.04, tails=3.6),
+    P(lean=0.05, dx=-0.42, dz=0.12, hipz=0.42, ff=(0.42, 0.04), bf=(-0.42, 0.06), sword=66, head=-0.05, tails=4.4),
+    P(lean=0.18, dx=-0.42, hipz=0.26, sq=0.85, sword=58, head=-0.14, tails=5.2),
+    P(dx=-0.42, tails=6.0),
 ]
 def victory(i):
     keys = [P(sword=80, grip=(0.44, 0.9), tails=0.5, grin=1.4),

@@ -14,7 +14,7 @@ Decisions: design/brainstorm.md D19-D22. Approved look: design/art/keyart/frog-r
 ## Animation frames (12 fps)
 - `common.py` — shared materials and mesh helpers (read by the two scripts below).
 - `anim_build.py` — posable frog (stance, planted feet with 2-bone legs, grip, sword angle,
-  lean, head, tail flutter, grin); renders idle (8), walk (8), strike (7), strike2 (6), strike3 (6), hurt (4), dodge (6), victory (8) at 1x in a 256x288
+  lean, head, tail flutter, grin); renders idle (8), walk (8), strike (7), strike2 (6), strike3 (6), hurt (5), dodge (7), victory (8) at 1x in a 256x288
   cell with the ground fixed. `blender -b --factory-startup --python anim_build.py -- FRAMES [idle,walk,strike]`
 - `anim_post.py` — same pixel finish as the key art; writes `frog_<anim>_sheet.png` (1x strip)
   and a 3x GIF preview. `python3 anim_post.py FRAMES OUTDIR`

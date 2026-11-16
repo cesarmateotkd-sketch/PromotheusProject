@@ -185,3 +185,10 @@ Key art v2 approved as the look: pixelated 3D, golden-hour HD-2D pond, heroic ch
 haori with shoulder armour, bold pixel hit effects and damage numbers. One change before
 animating: a bigger face and grin, so the expression reads at phone size. Next: the frog's
 full animation set rendered from the same Blender model.
+
+### D23 — frog animation set approved (2026-11-16)
+Approved: idle (8, breath + blink + twig flourish), walk (8, hop-step with squash/stretch),
+strike 1 overhead cut (7, baked smear), strike 2 rising sweep (6), strike 3 leaping thrust (6),
+hurt (5, white hit flash, > < eyes), dodge (7, big tucked hop back), victory (8, ^ ^ eyes),
+all 12 fps in a 256x288 cell from tools/sprites/frog-ronin/anim_build.py. The game should add
+root motion for dodge and hurt on top of the in-cell offsets. Next: the bugs, same pipeline.
