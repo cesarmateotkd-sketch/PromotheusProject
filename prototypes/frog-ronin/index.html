@@ -16,6 +16,7 @@
 <body>
 <canvas id="game"></canvas>
 <script src="config.js"></script>
+<script src="assets/sprites.js"></script>
 <script>
 'use strict';
 // Frog Ronin: a tiny frog samurai auto-duels bugs along a pond path. Every few stops you pick
@@ -160,6 +161,33 @@ function drawSprite(name, x, y, o = {}) {
 }
 // draw standing on the ground: cx = centre, gy = feet
 function drawFeet(name, cx, gy, o = {}) { const s = SPR[name], sc = o.scale || P; drawSprite(name, cx - s.w * sc / 2, gy - s.h * sc, o); }
+
+// ---- Rendered sprites: strips in assets/ made by tools/sprites/frog-ronin (Blender + Python) ----
+// Each strip is one animation, 12 fps; window.SPRITES (assets/sprites.js) holds the cell size, the
+// ground row and origin column inside a cell, and the frame count. Until a strip has loaded (or if
+// assets/ is missing) the game falls back to the hand-placed pixel grids above.
+const SPRITES = window.SPRITES || {};
+const SHEETS = {}, BG = {}, IMGS = window.SPRITE_IMAGES || {}; // embedded copies: no canvas taint from file://
+for (const [ch, m] of Object.entries(SPRITES)) for (const an of Object.keys(m.anims)) {
+  const im = new Image(); im.src = IMGS[`${ch}_${an}`] || `assets/${ch}_${an}.png`; SHEETS[`${ch}_${an}`] = im;
+}
+for (const k of ['sky', 'far', 'water', 'ground']) { const im = new Image(); im.src = IMGS[`bg_${k}`] || `assets/bg_${k}.png`; BG[k] = im; }
+const ready = im => im && im.complete && im.naturalWidth > 0;
+const CHAR = { beetle: 'beetle', mosq: 'mosquito', spit: 'spitter', mantis: 'mantis', hornet: 'hornet' };
+function animLen(ch, an) { const m = SPRITES[ch]; return m && m.anims[an] ? m.anims[an] / m.fps : 0; }
+function hasAnim(ch, an) { return ready(SHEETS[`${ch}_${an}`]); }
+/** Draw frame t (seconds into the anim) of character ch at ground point (x, gy). */
+function drawAnim(ch, an, t, x, gy, o = {}) {
+  const m = SPRITES[ch], im = SHEETS[`${ch}_${an}`];
+  if (!m || !ready(im)) return false;
+  const n = m.anims[an], sc = o.scale || 1;
+  let fr = Math.floor(t * m.fps); fr = o.loop ? ((fr % n) + n) % n : Math.max(0, Math.min(n - 1, fr));
+  const [cw, ch_] = m.cell;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  ctx.drawImage(im, fr * cw, 0, cw, ch_, Math.round(x - m.origin_col * sc), Math.round(gy - m.ground_row * sc), cw * sc, ch_ * sc);
+  ctx.restore(); return true;
+}
+function charTop(e) { const ch = CHAR[e.kind]; return hasAnim(ch, 'idle') ? SPRITES[ch].height : SPR[KINDS[e.kind].spr].h * P; }
 
 sprite('frog', [
   '......KKKK...KKKK.......',
@@ -354,7 +382,7 @@ function reset() {
   state = {
     t: 0, score: 0, gained: '',
     stop: 0, cleared: 0, phase: 'walk', phaseT: 0, scroll: 0, speed: 1,
-    frog: { hp: maxHp, max: maxHp, atkT: 0.4, lashT: 1, croakT: 2, shield: 0, critNext: false, moonQ: 0, moonT: 0, swing: 0, flash: 0, hop: 0 },
+    frog: { hp: maxHp, max: maxHp, atkT: 0.4, lashT: 1, croakT: 2, shield: 0, critNext: false, moonQ: 0, moonT: 0, swing: 0, flash: 0, hop: 0, act: null, actT: 0, combo: 0 },
     enemies: [], shots: [], fx: [], floaters: [], banner: null,
     techs: {}, combos: new Set(), picks: 0, offer: null,
     loot: { coins: 0, shell: 0, wing: 0, goo: 0, claw: 0, sting: 0 }, outcome: null, shake: 0,
@@ -375,7 +403,7 @@ function startStop() {
     return {
       kind: k, hp, max: hp, atk: CONFIG[K.atk].value * (boss ? 1 : 1 + tune.enemy_scale * 0.6 * (state.stop - 1)),
       t: CONFIG[K.int].value * (0.6 + rng() * 0.5), x: W + 40 + i * 50, tx: boss ? 268 : SLOTS[i], stun: 0, burn: 0, burnDps: 0,
-      flash: 0, lunge: 0, hits: 0, dead: false, deadT: 0, bob: rng() * 6,
+      flash: 0, lunge: 0, hits: 0, dead: false, deadT: 0, bob: rng() * 6, act: null, actT: 0, dy: boss ? 0 : [0, -12, 8][i],
     };
   });
   const f = state.frog;
@@ -429,14 +457,17 @@ function choose(k) {
 function enemyPos(e) {
   const K = KINDS[e.kind];
   let y = GROUND;
-  if (K.fly) y = GROUND - 70 + Math.sin(state.t * 4 + e.bob) * 8;
-  return { x: e.x - (e.lunge > 0 ? 22 * Math.sin(e.lunge / 0.18 * Math.PI) : 0), y };
+  const sheet = hasAnim(CHAR[e.kind], 'idle');
+  if (K.fly) y = sheet ? GROUND + Math.sin(state.t * 4 + e.bob) * 4 : GROUND - 70 + Math.sin(state.t * 4 + e.bob) * 8;
+  y += e.dy || 0;
+  return { x: e.x - (!sheet && e.lunge > 0 ? 22 * Math.sin(e.lunge / 0.18 * Math.PI) : 0), y };
 }
 function damageEnemy(e, dmg, color = '#ffffff', size = 16) {
   if (e.dead) return;
   dmg = Math.max(1, Math.round(dmg));
   e.hp -= dmg; e.flash = 0.1;
-  const p = enemyPos(e); floater(String(dmg), p.x + (rng() * 16 - 8), p.y - SPR[KINDS[e.kind].spr].h * P - 6, color, size);
+  if (e.act !== 'attack') { e.act = 'hurt'; e.actT = 0; }
+  const p = enemyPos(e); floater(String(dmg), p.x + (rng() * 16 - 8), p.y - charTop(e) - 6, color, size);
   if (e.hp <= 0) killEnemy(e);
 }
 function killEnemy(e) {
@@ -451,6 +482,7 @@ function killEnemy(e) {
 function strike(bonus = 1) {
   const target = alive()[0]; if (!target) return;
   const f = state.frog; f.swing = 0.18;
+  f.act = ['strike', 'strike2', 'strike3'][f.combo++ % 3]; f.actT = 0;
   const crit = f.critNext; f.critNext = false;
   if (target.kind === 'mosq' && rng() < tune.mosq_dodge && !crit) { const p = enemyPos(target); floater('miss', p.x, p.y - 50, '#9aa0b4', 14); return; }
   let dmg = (tune.frog_atk + meta.gear.spear * tune.spear_atk) * bonus * (crit ? 2 : 1);
@@ -484,7 +516,7 @@ function hitFrog(raw, src) {
   const f = state.frog;
   const dodge = Math.min(0.6, tune.leap_dodge * lvl('leap') + (has('mist') ? 0.1 : 0));
   if (dodge > 0 && rng() < dodge) {
-    f.critNext = true; f.hop = 0.3; floater('DODGE', FROG_X, GROUND - 80, '#9cd6ff', 16); sfx.dodge();
+    f.critNext = true; f.hop = 0.3; f.act = 'dodge'; f.actT = 0; floater('DODGE', FROG_X, GROUND - 80, '#9cd6ff', 16); sfx.dodge();
     if (has('moon')) { f.moonQ = tune.moon_hits; f.moonT = 0.05; }
     if (has('mist')) healFrog(tune.mist_heal);
     return;
@@ -494,15 +526,15 @@ function hitFrog(raw, src) {
   if (has('fortress') && block > 0 && src && !src.dead) damageEnemy(src, Math.max(1, Math.min(raw, block) * tune.fortress_reflect * 3), '#9cd6ff', 14);
   if (f.shield > 0) { const a = Math.min(f.shield, dmg); f.shield -= a; dmg -= a; if (a) floater(`(${Math.round(a)})`, FROG_X - 26, GROUND - 70, '#7ae8f0', 14); }
   if (dmg <= 0) return;
-  f.hp -= dmg; f.flash = 0.12; state.shake = 0.15;
+  f.hp -= dmg; f.flash = 0.12; state.shake = 0.15; f.act = 'hurt'; f.actT = 0;
   floater(`-${dmg}`, FROG_X + 8, GROUND - 74, '#ff6a6a', 18); sfx.hurt();
   if (f.hp <= 0) { f.hp = 0; endRun(false); }
 }
 function enemyAttack(e) {
   const K = KINDS[e.kind];
   e.hits++;
-  if (K.ranged) { const p = enemyPos(e); state.shots.push({ x: p.x - 30, y: p.y - 26, t: 0, dmg: e.atk, src: e }); e.lunge = 0.12; return; }
-  e.lunge = 0.18;
+  if (K.ranged) { const p = enemyPos(e); state.shots.push({ x: p.x - 30, y: p.y - 26, t: 0, dmg: e.atk, src: e }); e.lunge = 0.12; e.act = 'attack'; e.actT = 0; return; }
+  e.lunge = 0.18; e.act = 'attack'; e.actT = 0;
   if (e.kind === 'mantis' && e.hits % 4 === 0) { hitFrog(e.atk, e); if (state.phase === 'fight') hitFrog(e.atk, e); floater('DOUBLE SLASH', 200, GROUND - 130, '#ffbe78', 14); return; }
   if (e.kind === 'hornet' && e.hits % 5 === 0) { for (let i = 0; i < 3 && state.phase === 'fight'; i++) hitFrog(e.atk * 0.6, e); floater('STINGER BARRAGE', 200, GROUND - 150, '#f2c42a', 14); return; }
   hitFrog(e.atk, e);
@@ -556,6 +588,14 @@ function endRun(win) {
 
 // ---- Drawing -------------------------------------------------------------------------------
 function drawWorld(scroll) {
+  if (ready(BG.sky) && ready(BG.far) && ready(BG.water) && ready(BG.ground)) { // golden-hour HD-2D layers (2x, drawn at half)
+    ctx.save(); ctx.imageSmoothingEnabled = true;
+    const layer = (im, v, y, h) => { const off = ((scroll * v) % 720 + 720) % 720; ctx.drawImage(im, -off, y, 720, h); ctx.drawImage(im, 720 - off, y, 720, h); };
+    ctx.drawImage(BG.sky, 0, 0, W, 300);
+    layer(BG.far, 0.2, 0, 300); layer(BG.water, 0.5, 300, 66); layer(BG.ground, 1, 366, 94);
+    ctx.restore(); rect(0, 460, W, 10, '#a8865c');
+    return;
+  }
   // dusk sky in bands (muted: the units and rewards must outshine it)
   const bands = ['#1b1730', '#221d3a', '#2a2445', '#332b50', '#3c3258'];
   for (let i = 0; i < bands.length; i++) rect(0, i * 60, W, 60, bands[i]);
@@ -597,6 +637,7 @@ function drawFrog(gy) {
   if (state.phase === 'walk') y -= Math.abs(Math.sin(t * 7)) * 9;
   else y -= Math.round(Math.sin(t * 2.5) * 1.5) * P / 3;
   if (f.hop > 0) y -= Math.sin(f.hop / 0.3 * Math.PI) * 26;
+  if (hasAnim('frog', 'idle')) { drawFrogSheet(gy); return; }
   const s = SPR.frog, x0 = FROG_X - s.w * P / 2, y0 = y - s.h * P;
   // combo looks
   if (has('mist')) for (let i = 0; i < 5; i++) rect(x0 - 6 + ((t * 20 + i * 17) % 80), gy - 6 - (i % 2) * 6, 12, 3, 'rgba(200,220,240,0.35)');
@@ -616,14 +657,34 @@ function drawFrog(gy) {
   rect(Math.round(lx / P) * P - P, Math.round(ly / P) * P - P, P, P, '#5ab84a');
   if (f.shield > 0) { ctx.strokeStyle = 'rgba(122,232,240,0.7)'; ctx.lineWidth = 3; ctx.strokeRect(x0 - 6, y0 - 6, s.w * P + 12, s.h * P + 12); }
 }
+function drawFrogSheet(gy) {
+  const f = state.frog, t = state.t;
+  let an = state.phase === 'walk' ? 'walk' : 'idle', at = t, loop = true;
+  if (f.act && f.actT < animLen('frog', f.act)) { an = f.act; at = f.actT; loop = false; }
+  if (state.phase === 'end' && state.outcome === 'win') { an = 'victory'; at = state.endT; loop = false; }
+  const x0 = FROG_X - 30, y0 = gy - 104; // the frog's body box, for the combo looks
+  if (has('mist')) for (let i = 0; i < 5; i++) rect(x0 - 6 + ((t * 20 + i * 17) % 80), gy - 6 - (i % 2) * 6, 12, 3, 'rgba(255,255,255,0.45)');
+  if (has('fortress')) drawSprite('shellback', x0 - 22, y0 + 40);
+  drawAnim('frog', an, at, FROG_X, gy, { loop });
+  if (has('moon')) drawSprite('moon', x0 + 18, y0 - 22);
+  if (has('thunder')) drawSprite('bolt', x0 + 62, y0 + 18);
+  if (has('storm')) for (let i = 0; i < 3; i++) { const a = t * 3 + i * 2.1; rect(FROG_X + Math.cos(a) * 46, y0 + 50 + Math.sin(a) * 22, 6, 6, '#6ab4ff'); }
+  if (f.shield > 0) { ctx.strokeStyle = 'rgba(122,232,240,0.7)'; ctx.lineWidth = 3; ctx.strokeRect(x0 - 12, y0 - 8, 84, 116); }
+}
 function drawEnemy(e) {
   const K = KINDS[e.kind], p = enemyPos(e);
   let name = K.spr;
   if (e.kind === 'mosq' && Math.floor(state.t * 12 + e.bob) % 2) name = 'mosq2';
   const alpha = e.dead ? Math.max(0, 1 - e.deadT / 0.4) : 1;
-  drawFeet(name, p.x, p.y, { white: e.flash > 0, alpha });
+  const ch = CHAR[e.kind];
+  if (hasAnim(ch, 'idle')) {
+    let an = 'idle', at = state.t + e.bob, loop = true;
+    if (e.dead) { an = 'hurt'; at = 1; loop = false; }
+    else if (e.act && e.actT < animLen(ch, e.act)) { an = e.act; at = e.actT; loop = false; }
+    drawAnim(ch, an, at, p.x, p.y, { loop, alpha });
+  } else drawFeet(name, p.x, p.y, { white: e.flash > 0, alpha });
   if (e.dead) return;
-  const s = SPR[name], top = p.y - s.h * P;
+  const top = p.y - charTop(e);
   if (e.stun > 0) text('zz', p.x + 20, top - 6, 14, '#ffe85a');
   if (e.burn > 0) rect(p.x - 6 + Math.sin(state.t * 20) * 6, top - 3, 6, 6, '#ffa040');
   if (!K.boss) { // small HP bar
@@ -726,10 +787,14 @@ const scenes = {
     draw() {
       drawWorld(0); rect(0, 0, W, H, 'rgba(13,11,22,0.45)');
       text('FIGURES', W / 2, 26, 18, '#efe39c');
-      const row = (list, gy) => list.forEach(([n, label, x]) => { drawFeet(n, x, gy); text(label, x, gy + 16, 14, '#ffffff'); });
+      const row = (list, gy) => list.forEach(([n, label, x]) => {
+        const ch = n === 'frog' ? 'frog' : CHAR[n];
+        if (!drawAnim(ch, 'idle', state.t, x, gy, { loop: true })) drawFeet(n, x, gy);
+        text(label, x, gy + 16, 14, '#ffffff');
+      });
       row([['frog', 'Frog Ronin', 70], ['beetle', 'Beetle', 180], ['mosq', 'Mosquito', 290]], 180);
-      row([['spit', 'Spitter Bug', 90], ['mantis', 'Mantis', 250]], 360);
-      row([['hornet', 'Hornet Shogun', 180]], 580);
+      row([['spit', 'Spitter Bug', 90], ['mantis', 'Mantis', 250]], 330);
+      row([['hornet', 'Hornet Shogun', 180]], 606);
     },
   },
   title: {
@@ -740,7 +805,7 @@ const scenes = {
       drawWorld(state ? state.t * 20 : 0);
       rect(0, 0, W, H, 'rgba(13,11,22,0.35)');
       shadowText('FROG', W / 2, 120, 52, '#a8f080'); shadowText('RONIN', W / 2, 174, 52, '#e03a3a');
-      drawFeet('frog', W / 2, 360, { scale: 6 });
+      if (!drawAnim('frog', 'idle', clock.now(), W / 2 + 20, 420, { loop: true, scale: 2 })) drawFeet('frog', W / 2, 360, { scale: 6 });
       panel(30, 452, 300, 116, '#1b1730', '#4a3f6e');
       CONTROLS.forEach((c, i) => text(c, W / 2, 478 + i * 30, 14, '#d8d0f0', 'center', false));
       text(meta.runs ? `Runs ${meta.runs}   Wins ${meta.wins}` : 'Become the legend of the pond', W / 2, 590, 14, '#8a80aa');
@@ -765,9 +830,9 @@ const scenes = {
       const sdt = dt * state.speed;
       state.t += sdt; fxDt += sdt;
       const f = state.frog;
-      f.swing = Math.max(0, f.swing - sdt); f.flash = Math.max(0, f.flash - sdt); f.hop = Math.max(0, f.hop - sdt);
+      f.swing = Math.max(0, f.swing - sdt); f.flash = Math.max(0, f.flash - sdt); f.hop = Math.max(0, f.hop - sdt); f.actT += sdt;
       state.shake = Math.max(0, state.shake - sdt);
-      for (const e of state.enemies) { e.flash = Math.max(0, e.flash - sdt); e.lunge = Math.max(0, e.lunge - sdt); if (e.x > e.tx) e.x = Math.max(e.tx, e.x - 420 * sdt); }
+      for (const e of state.enemies) { e.actT += sdt; e.flash = Math.max(0, e.flash - sdt); e.lunge = Math.max(0, e.lunge - sdt); if (e.x > e.tx) e.x = Math.max(e.tx, e.x - 420 * sdt); }
       if (state.phase === 'walk') {
         state.phaseT += sdt; state.scroll += 90 * sdt;
         if (state.phaseT >= tune.walk_time) startStop();
@@ -779,7 +844,7 @@ const scenes = {
       const sh = state.shake > 0 ? Math.round(Math.sin(state.t * 90) * 3) : 0;
       ctx.save(); ctx.translate(sh, 0);
       drawWorld(state.scroll);
-      for (const e of state.enemies) drawEnemy(e);
+      for (const e of [...state.enemies].sort((a, b) => (a.dy || 0) - (b.dy || 0))) drawEnemy(e);
       drawFrog(GROUND);
       const dt = fxDt; fxDt = 0;
       drawFx(dt);

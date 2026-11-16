@@ -3,6 +3,8 @@
 ## In your words
 mobile portrait, cute-but-epic idle RPG. A small frog samurai auto-fights bugs along a pond path; every few fights the player picks 1 of 3 techniques; techniques combine into named combos (real build decisions); a run lasts about 3-5 minutes and ends in a boss; win or fall you bring home coins and bug materials; between runs a simple upgrade screen (crafting gear from bug materials). One-handed tap only. Placeholder pixel art is fine. Question to answer: is the run loop (auto-fight + 1-of-3 picks + combos + boss) fun and does it make you want another run?
 
+After play: "the graphics are not quite there and need major refinement but the game play works"; art direction chosen: 96px+ characters rendered in 3D with Blender, HD-2D hybrid, full animation set, Legend of Mushroom look; pixelated 3D finish; golden hour; "Put it all in the game"
+
 1. Fights: few tough bugs · 2. Combos: shown · 3. View: side view · 4. Difficulty: fall, then win
 
 **Pitch:** A tiny frog with a twig sword fights his way along the pond, mixing techniques into combos, to become the pond's legend.
@@ -18,7 +20,7 @@ mobile portrait, cute-but-epic idle RPG. A small frog samurai auto-fights bugs a
 **Intent:** staged failure (from your answer: fall, then win)
 
 ## Look and references
-- Look: side-view pixel art following `design/art/sprite-style-guide.md`: muted pond-bank backdrop (dusky greens, teal water), a vivid green frog with a red headband and twig sword, each bug one colour family, gold coins and white hit sparks as the most saturated things on screen, 1px near-black outlines on all characters. Signature detail: combos flash their name in a banner and change the frog's look. Every figure drawn, no emoji, no plain circles.
+- Look (after play, D19-D24): pixelated-3D sprites rendered from Blender models (3/4 side view, hue-shifted toon ramps, 1px outline) on a golden-hour HD-2D pond backdrop; the frog in haori and shoulder armour with 8 animations; a bug samurai clan (ashigaru beetle, ninja mosquito, teppo spitter, ronin mantis, armoured Hornet Shogun) with idle, attack and hurt. Before: side-view pixel art following `design/art/sprite-style-guide.md`: muted pond-bank backdrop (dusky greens, teal water), a vivid green frog with a red headband and twig sword, each bug one colour family, gold coins and white hit sparks as the most saturated things on screen, 1px near-black outlines on all characters. Signature detail: combos flash their name in a banner and change the frog's look. Every figure drawn, no emoji, no plain circles.
 - References: Capybara Go (auto-advance + 1-of-3 picks), Legend of Mushroom (watching duels), Vampire Survivors (evolve recipes shown on cards).
 - View: 2D · Camera: static side view; the path scrolls past.
 

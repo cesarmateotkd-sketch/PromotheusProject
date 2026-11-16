@@ -200,7 +200,7 @@ sun("key", (-1.0, -1.1, 1.0), (1, 0.85, 0.65), 3.6); sun("rim", (1.3, 1.2, 0.5),
 w = bpy.data.worlds.new("w"); scn.world = w; w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.25, 0.27, 0.35, 1); w.node_tree.nodes["Background"].inputs[1].default_value = 0.35
 r = scn.render; r.engine = "CYCLES"; scn.cycles.device = "CPU"; r.film_transparent = True
-scn.view_settings.view_transform = "Standard"; r.resolution_x, r.resolution_y, r.resolution_percentage = 256, 288, 100
+scn.view_settings.view_transform = "Standard"; r.resolution_x, r.resolution_y, r.resolution_percentage = 256, 288, int(os.environ.get("RES_PCT", "100"))
 os.makedirs(OUT, exist_ok=True)
 for anim in ANIMS:
     for i, pose in enumerate(POSES[anim]):

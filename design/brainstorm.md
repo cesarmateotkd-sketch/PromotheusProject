@@ -201,3 +201,9 @@ root motion for dodge and hurt on top of the in-cell offsets. Next: the bugs, sa
 - Hornet Shogun = armoured warlord: gold-and-black kabuto with a crest, red cape, twin stinger
   blades, about twice the frog's height.
 - Order: all five with a simple set first (idle, attack, hurt), then deepen.
+
+### D25 — new art in the playable game (2026-11-16)
+The Blender-rendered frog and bug clan and the golden-hour backdrop replace the placeholder
+pixel grids in prototypes/frog-ronin (iteration 1). Sprites drawn at 2/3 of the key-art scale so a
+stop of three bugs fits a phone screen (frog ~100 px tall). Open: the Hornet Shogun needs a
+detail pass to be the most impressive thing in the game (the person's call after review 1 of the bugs).

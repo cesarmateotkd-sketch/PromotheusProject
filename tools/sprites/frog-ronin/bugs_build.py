@@ -227,7 +227,7 @@ sun("key", (1.47, 0.32, 1.0), (1, 0.85, 0.65), 3.6); sun("rim", (-1.7, -0.53, 0.
 w = bpy.data.worlds.new("w"); scn.world = w; w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.25, 0.27, 0.35, 1); w.node_tree.nodes["Background"].inputs[1].default_value = 0.35
 r = scn.render; r.engine = "CYCLES"; scn.cycles.device = "CPU"; r.film_transparent = True
-scn.view_settings.view_transform = "Standard"; r.resolution_percentage = 100
+scn.view_settings.view_transform = "Standard"; r.resolution_percentage = int(os.environ.get("RES_PCT", "100"))
 os.makedirs(OUT, exist_ok=True)
 for bug in BUGS:
     cw, ch, tz = CELL[bug]; r.resolution_x, r.resolution_y = cw, ch
@@ -237,7 +237,7 @@ for bug in BUGS:
     cam.rotation_euler = (tgt - cam.location).to_track_quat("-Z", "Y").to_euler()
     bpy.context.view_layer.update()
     g = world_to_camera_view(scn, cam, Vector((0, 0, 0)))
-    json.dump({"cell": [cw, ch], "ground_row": round((1 - g.y) * ch), "origin_col": cw - round(g.x * cw), "fps": 12, "flipped": True}, open(f"{OUT}/{bug}_meta.json", "w"))
+    k = r.resolution_percentage / 100; json.dump({"cell": [round(cw * k), round(ch * k)], "ground_row": round((1 - g.y) * ch * k), "origin_col": round((cw - g.x * cw) * k), "fps": 12, "flipped": True}, open(f"{OUT}/{bug}_meta.json", "w"))
     spec = POSES[bug]
     for anim in ("idle", "attack", "hurt"):
         for i, kw in enumerate(spec[anim]):

@@ -25,3 +25,9 @@ Decisions: design/brainstorm.md D19-D22. Approved look: design/art/keyart/frog-r
   mirrored lights) so the fronts face the camera; writes `<bug>_meta.json` with cell size and
   ground row. `blender -b --factory-startup --python bugs_build.py -- FRAMES [bug,bug]`
 - Finish with `FLIP=1 SHEET_PREFIX="" python3 anim_post.py FRAMES OUTDIR` (flips them to face left).
+
+## Into the game
+- `RES_PCT=67` on both build scripts renders at the game's scale (2/3 of the key art).
+- `bg_layers.py OUTDIR` — golden-hour parallax backdrop layers (sky, far, water, ground) at 2x.
+- `make_game_assets.py FROG_FRAMES BUG_FRAMES BG_DIR prototypes/frog-ronin` — packs the strips and
+  layers into the game's assets/ and writes assets/sprites.js (metadata plus embedded copies).

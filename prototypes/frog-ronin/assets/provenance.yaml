@@ -9,3 +9,171 @@
 #   date: 2026-01-31
 #   ships: true               # false for a file only the build uses
 #   placeholder: true         # until it is replaced; leave the line out otherwise
+- path: assets/beetle_attack.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/beetle_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/beetle_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/bg_far.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/bg_ground.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/bg_sky.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/bg_water.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_dodge.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_strike.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_strike2.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_strike3.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_victory.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/frog_walk.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/hornet_attack.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/hornet_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/hornet_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mantis_attack.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mantis_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mantis_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mosquito_attack.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mosquito_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/mosquito_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/spitter_attack.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/spitter_hurt.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/spitter_idle.png
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
+- path: assets/sprites.js
+  origin: code
+  tool: "tools/sprites/frog-ronin (Blender 5.3 models rendered and pixel-finished by Python/Pillow scripts)"
+  model: "Claude (AI-written scripts)"
+  date: 2026-11-16
+  ships: true
