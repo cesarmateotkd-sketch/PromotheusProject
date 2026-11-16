@@ -1,16 +1,17 @@
 """Blender: the frog's animation frames, built from pose keys (12 fps).
 Run: blender -b --factory-startup --python anim_build.py -- OUTDIR [anim,anim]
-Writes OUTDIR/<anim>_<i>_lit.png and _alb.png at 1x (256x224 cell, ground fixed)."""
+Writes OUTDIR/<anim>_<i>_lit.png and _alb.png at 1x (256x288 cell, ground fixed)."""
 import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "common.py")).read())
 import math
 from mathutils import Vector
-ANIMS = sys.argv[sys.argv.index("--") + 2].split(",") if len(sys.argv) > sys.argv.index("--") + 2 else ["idle", "walk", "strike"]
+ANIMS = sys.argv[sys.argv.index("--") + 2].split(",") if len(sys.argv) > sys.argv.index("--") + 2 else ["idle", "walk", "strike", "strike2", "strike3", "hurt", "dodge", "victory"]
 for name, col in {"trim": (240, 236, 224), "armor": (176, 44, 52), "mouth": (70, 24, 36), "brow": (46, 120, 48)}.items():
     if name not in mats: raise SystemExit("common.py is missing material " + name)
 
 BASEPOSE = dict(lean=0.12, bob=0.0, head=-0.1, hipz=0.36, ff=(0.5, 0.0), bf=(-0.46, 0.0),
-                grip=(0.44, 0.58), sword=55, tails=0.0, grin=1.0, sq=1.0, eye=0.0)
+                grip=(0.44, 0.58), sword=55, tails=0.0, grin=1.0, sq=1.0, eye=0.0,
+                yaw=0.0, dx=0.0, dz=0.0, blink=0.0, happy=0.0)
 
 def build_frog(P):
     made = set(o.name for o in scn.objects)
@@ -44,9 +45,16 @@ def build_frog(P):
     for s in (-1, 1):
         y = 0.21 * s
         Hh(ball(f"bulb{s}", 0.215, "skin", (0.09, y, HZ + 0.29)))
-        Hh(ball(f"eyew{s}", 0.19, "eyew", (0.17, y * 1.05, HZ + 0.33)))
-        Hh(ball(f"pupil{s}", 0.12, "pupil", (0.31, y * 1.05 + 0.01, HZ + 0.32 + P["eye"]), (0.55, 1, 1.2)))
-        Hh(ball(f"hi{s}", 0.045, "hilite", (0.375, y * 1.05 - 0.04, HZ + 0.39 + P["eye"]), sub=0))
+        if P["blink"] < 0.5:
+            Hh(ball(f"eyew{s}", 0.19, "eyew", (0.17, y * 1.05, HZ + 0.33)))
+            Hh(ball(f"pupil{s}", 0.12, "pupil", (0.31, y * 1.05 + 0.01, HZ + 0.32 + P["eye"]), (0.55, 1, 1.2)))
+            Hh(ball(f"hi{s}", 0.045, "hilite", (0.375, y * 1.05 - 0.04, HZ + 0.39 + P["eye"]), sub=0))
+        else:  # closed: a dark lid line, arched up when happy, pinched when hurt
+            Hh(ball(f"lid{s}", 0.19, "foot", (0.17, y * 1.05, HZ + 0.33)))
+            arch = 0.1 if P["happy"] else -0.05
+            c0 = Vector((0.34, y * 1.05 - 0.12, HZ + 0.3)); c2 = Vector((0.34, y * 1.05 + 0.12, HZ + 0.3))
+            c1 = Vector((0.39, y * 1.05, HZ + 0.3 + arch))
+            Hh(seg(f"lidl{s}", c0, c1, 0.042, 0.042, "mouth", sub=0, v=6)); Hh(seg(f"lidr{s}", c1, c2, 0.042, 0.042, "mouth", sub=0, v=6))
         Hh(seg(f"brow{s}", (0.2, y * 1.05 + 0.11 * s, HZ + 0.54), (0.33, y * 0.7, HZ + 0.46), 0.038, 0.03, "brow"))
     Hh(torus("band", 0.39, 0.045, "band", (0.06, 0, HZ + 0.14), (1.1, 1.0, 1), rot=(0, -0.12, 0)))
     t = P["tails"]
@@ -87,8 +95,11 @@ def build_frog(P):
     bpy.context.view_layer.update()
     up.location = (0, 0, P["hipz"] + P["bob"]); 
     for o in upper + [hd]: o.location = o.location - Vector((0, 0, P["hipz"] + P["bob"]))
-    up.rotation_euler = (0, P["lean"], 0); hd.rotation_euler = (0, P["head"], 0)
-    return [o for o in scn.objects if o.name not in made]
+    up.rotation_euler = (0, P["lean"], P["yaw"]); hd.rotation_euler = (0, P["head"], 0)
+    objs = [o for o in scn.objects if o.name not in made]
+    for o in objs:
+        if o.parent is None: o.location = o.location + Vector((P["dx"], 0, P["dz"]))
+    return objs
 
 def clear(objs):
     for o in objs:
@@ -105,29 +116,74 @@ def mix(a, b, t):
         else: o[k] = a[k] + (b[k] - a[k]) * t
     return o
 TAU = 2 * math.pi
-def idle(i, n=6):
-    ph = TAU * i / n
-    return P(bob=-0.02 * (1 - math.cos(ph)) / 2, sword=55 + 3 * math.sin(ph), tails=ph, grin=1.0, head=-0.1 + 0.02 * math.sin(ph))
+def idle(i, n=8):
+    ph = TAU * i / n; br = (1 - math.cos(ph)) / 2
+    return P(bob=-0.045 * br, sq=1.0 - 0.05 * br, sword=52 + 9 * math.sin(ph), grip=(0.44, 0.58 + 0.03 * br),
+             tails=ph, head=-0.1 + 0.03 * math.sin(ph), blink=1.0 if i == 5 else 0.0)
 def walk(i, n=8):
+    """Hop-step: push off, airborne stretch, land squash."""
     ph = TAU * i / n; c, s_ = math.cos(ph), math.sin(ph)
-    ff = (0.18 + 0.3 * c, max(0, 0.12 * s_)); bf = (-0.12 - 0.3 * c, max(0, -0.12 * s_))
-    return P(ff=ff, bf=bf, hipz=0.4, bob=0.03 * abs(math.sin(ph)), lean=0.08, sword=62, grip=(0.4, 0.62), tails=ph * 1.5, head=-0.05)
-STRIKE = [  # key poses: wind-up, raise, hold, CUT, follow-through, settle
-    P(lean=0.0, sword=95, grip=(0.3, 0.8), head=-0.05, grin=0.9),
-    P(lean=-0.12, sword=128, grip=(0.12, 0.94), head=0.0, bob=0.02, grin=0.8, ff=(0.42, 0.0), tails=1.0),
-    P(lean=-0.16, sword=140, grip=(0.06, 0.96), head=0.02, bob=0.03, grin=0.8, ff=(0.42, 0.0), tails=1.6),
-    P(lean=0.42, sword=30, grip=(0.64, 0.8), head=-0.2, hipz=0.3, ff=(0.72, 0.0), bf=(-0.58, 0.0), grin=1.5, sq=0.92, tails=3.0),
-    P(lean=0.36, sword=20, grip=(0.64, 0.74), head=-0.18, hipz=0.3, ff=(0.72, 0.0), bf=(-0.58, 0.0), grin=1.4, sq=0.95, tails=3.8),
-    P(lean=0.26, sword=32, grip=(0.55, 0.7), head=-0.14, hipz=0.33, ff=(0.64, 0.0), bf=(-0.52, 0.0), grin=1.2, tails=4.6),
-    mix(P(lean=0.26, sword=32, grip=(0.55, 0.7), head=-0.14, hipz=0.33, ff=(0.64, 0.0), bf=(-0.52, 0.0), grin=1.2, tails=5.2), P(tails=5.2), 0.5),
-    P(tails=6.0),
+    air = max(0, math.sin(2 * ph)); land = max(0, -math.sin(2 * ph))
+    ff = (0.2 + 0.34 * c, max(0, 0.18 * s_)); bf = (-0.14 - 0.34 * c, max(0, -0.18 * s_))
+    return P(ff=ff, bf=bf, hipz=0.4, bob=0.1 * air - 0.03 * land, sq=1.0 + 0.07 * air - 0.09 * land, lean=0.1,
+             sword=62 - 8 * air, grip=(0.4, 0.62), tails=ph * 1.5, head=-0.05 - 0.05 * land)
+CUT = dict(lean=0.4, yaw=-0.35, head=-0.38, hipz=0.28, ff=(0.86, 0.0), bf=(-0.62, 0.0), grin=1.6, sq=0.9)
+STRIKE = [  # anticipation, coil, SMEAR, impact, follow, recover, settle
+    P(lean=-0.1, sword=118, grip=(0.2, 0.86), head=0.0, bob=0.02, grin=0.8, ff=(0.42, 0.0), tails=1.0),
+    P(lean=-0.18, sword=145, grip=(0.04, 0.98), head=0.04, bob=0.04, grin=0.8, ff=(0.42, 0.0), sq=1.05, tails=1.6),
+    P(**{**CUT, "sword": 70, "grip": (0.5, 0.92), "lean": 0.2, "tails": 2.4}),
+    P(**{**CUT, "sword": 30, "grip": (0.68, 0.8), "tails": 3.0}),
+    P(**{**CUT, "sword": 20, "grip": (0.66, 0.74), "lean": 0.34, "tails": 3.8, "sq": 0.95}),
+    P(lean=0.2, yaw=-0.18, sword=34, grip=(0.55, 0.7), head=-0.22, hipz=0.33, ff=(0.66, 0.0), bf=(-0.54, 0.0), grin=1.2, tails=4.6),
+    P(tails=5.4),
 ]
-POSES = {"idle": [idle(i) for i in range(6)], "walk": [walk(i) for i in range(8)], "strike": STRIKE}
+STRIKE2 = [  # rising sweep: low back to high front
+    P(lean=0.15, sword=-150, grip=(0.1, 0.5), hipz=0.3, ff=(0.6, 0.0), bf=(-0.5, 0.0), head=-0.1, grin=0.9, tails=1.0),
+    P(lean=0.25, yaw=-0.2, sword=-165, grip=(0.0, 0.45), hipz=0.27, ff=(0.62, 0.0), bf=(-0.52, 0.0), head=-0.2, grin=0.9, sq=0.93, tails=1.6),
+    P(lean=-0.05, yaw=-0.3, sword=20, grip=(0.55, 0.8), hipz=0.36, ff=(0.62, 0.0), head=-0.1, grin=1.5, sq=1.06, tails=2.6),
+    P(lean=-0.12, yaw=-0.3, sword=70, grip=(0.5, 1.0), hipz=0.38, bob=0.05, ff=(0.6, 0.0), head=0.0, grin=1.5, sq=1.06, tails=3.4),
+    P(lean=-0.06, sword=80, grip=(0.4, 0.96), hipz=0.38, bob=0.03, head=-0.04, grin=1.2, tails=4.2),
+    P(tails=5.0),
+]
+STRIKE3 = [  # leaping thrust
+    P(lean=0.1, sword=10, grip=(0.25, 0.6), hipz=0.26, sq=0.88, head=-0.12, grin=0.9, tails=1.0),
+    P(lean=0.3, yaw=-0.25, sword=8, grip=(0.4, 0.66), dx=0.12, dz=0.28, hipz=0.42, sq=1.08, ff=(0.3, 0.1), bf=(-0.3, 0.12), head=-0.3, grin=1.3, tails=2.0),
+    P(lean=0.36, yaw=-0.3, sword=4, grip=(0.78, 0.7), dx=0.32, dz=0.16, hipz=0.4, sq=1.05, ff=(0.55, 0.05), bf=(-0.45, 0.1), head=-0.34, grin=1.6, tails=2.8),
+    P(lean=0.34, yaw=-0.3, sword=2, grip=(0.8, 0.66), dx=0.36, dz=0.0, hipz=0.28, sq=0.9, ff=(0.75, 0.0), bf=(-0.55, 0.0), head=-0.32, grin=1.5, tails=3.6),
+    P(lean=0.2, sword=26, grip=(0.6, 0.66), dx=0.2, hipz=0.33, ff=(0.6, 0.0), bf=(-0.5, 0.0), head=-0.2, grin=1.2, tails=4.4),
+    P(tails=5.2),
+]
+HURT = [
+    P(lean=-0.3, yaw=0.15, head=0.25, bob=0.03, dx=-0.08, sword=95, grip=(0.3, 0.7), blink=1.0, grin=0.5, ff=(0.4, 0.0), tails=1.0),
+    P(lean=-0.24, yaw=0.1, head=0.2, bob=0.0, dx=-0.14, sword=90, grip=(0.32, 0.66), blink=1.0, grin=0.5, sq=0.94, ff=(0.36, 0.0), bf=(-0.5, 0.0), tails=1.8),
+    P(lean=-0.08, head=0.04, dx=-0.08, sword=70, grip=(0.4, 0.62), grin=0.7, tails=2.6),
+    P(dx=-0.02, tails=3.4),
+]
+DODGE = [  # hop back and land
+    P(lean=0.12, hipz=0.28, sq=0.88, sword=60, head=-0.1, tails=1.0),
+    P(lean=-0.15, dx=-0.17, dz=0.3, hipz=0.44, sq=1.08, ff=(0.3, 0.12), bf=(-0.3, 0.16), sword=80, grip=(0.36, 0.7), head=0.05, tails=2.0, eye=0.02),
+    P(lean=-0.1, dx=-0.28, dz=0.36, hipz=0.42, sq=1.05, ff=(0.28, 0.14), bf=(-0.28, 0.16), sword=78, grip=(0.36, 0.7), head=0.03, tails=2.8),
+    P(lean=0.05, dx=-0.33, dz=0.12, hipz=0.4, ff=(0.4, 0.04), bf=(-0.4, 0.06), sword=66, head=-0.05, tails=3.6),
+    P(lean=0.15, dx=-0.34, hipz=0.28, sq=0.88, sword=58, head=-0.12, tails=4.4),
+    P(dx=-0.34, tails=5.2),
+]
+def victory(i):
+    keys = [P(sword=80, grip=(0.44, 0.9), tails=0.5, grin=1.4),
+            P(lean=-0.1, sword=62, grip=(0.66, 0.88), bob=0.0, hipz=0.3, sq=0.9, grin=1.6, tails=1.2, head=0.1),
+            P(lean=-0.12, sword=62, grip=(0.66, 0.98), dz=0.3, hipz=0.44, sq=1.1, grin=1.8, blink=1.0, happy=1.0, tails=2.0, head=0.15, ff=(0.3, 0.1), bf=(-0.3, 0.1)),
+            P(lean=-0.12, sword=62, grip=(0.66, 0.98), dz=0.36, hipz=0.44, sq=1.08, grin=1.8, blink=1.0, happy=1.0, tails=2.8, head=0.15, ff=(0.3, 0.12), bf=(-0.3, 0.12)),
+            P(lean=-0.1, sword=62, grip=(0.66, 0.96), dz=0.1, hipz=0.4, sq=1.0, grin=1.8, blink=1.0, happy=1.0, tails=3.6, head=0.12),
+            P(lean=-0.08, sword=62, grip=(0.66, 0.92), hipz=0.3, sq=0.9, grin=1.8, blink=1.0, happy=1.0, tails=4.4, head=0.1),
+            P(lean=-0.08, sword=62, grip=(0.66, 0.92), hipz=0.36, sq=1.0, grin=1.8, blink=1.0, happy=1.0, tails=5.2, head=0.1),
+            P(lean=-0.08, sword=62, grip=(0.66, 0.92), hipz=0.36, sq=1.0, grin=1.8, blink=1.0, happy=1.0, tails=6.0, head=0.1)]
+    return keys[i]
+POSES = {"idle": [idle(i) for i in range(8)], "walk": [walk(i) for i in range(8)], "strike": STRIKE,
+         "strike2": STRIKE2, "strike3": STRIKE3, "hurt": HURT, "dodge": DODGE, "victory": [victory(i) for i in range(8)]}
 
 # ---------------- camera, lights, render ------------------------------------
-tgt = Vector((0.12, 0.0, 0.9)); az, el = math.radians(30), math.radians(9)
+tgt = Vector((0.12, 0.0, 1.2)); az, el = math.radians(30), math.radians(9)
 cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam")); scn.collection.objects.link(cam)
-cam.data.type = "ORTHO"; cam.data.ortho_scale = 256 / 91.0
+cam.data.type = "ORTHO"; cam.data.ortho_scale = 288 / 91.0
 cam.location = tgt + 20 * Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el)))
 cam.rotation_euler = (tgt - cam.location).to_track_quat("-Z", "Y").to_euler(); scn.camera = cam
 def sun(n, to_src, col, s):
@@ -138,7 +194,7 @@ sun("key", (-1.0, -1.1, 1.0), (1, 0.85, 0.65), 3.6); sun("rim", (1.3, 1.2, 0.5),
 w = bpy.data.worlds.new("w"); scn.world = w; w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.25, 0.27, 0.35, 1); w.node_tree.nodes["Background"].inputs[1].default_value = 0.35
 r = scn.render; r.engine = "CYCLES"; scn.cycles.device = "CPU"; r.film_transparent = True
-scn.view_settings.view_transform = "Standard"; r.resolution_x, r.resolution_y, r.resolution_percentage = 256, 224, 100
+scn.view_settings.view_transform = "Standard"; r.resolution_x, r.resolution_y, r.resolution_percentage = 256, 288, 100
 os.makedirs(OUT, exist_ok=True)
 for anim in ANIMS:
     for i, pose in enumerate(POSES[anim]):

@@ -42,13 +42,52 @@ def stage(w, h):
         d.line([(0, y), (w, y)], fill=(*c, 255))
     d.rectangle([0, g - 10, w, g + 2], fill=(118, 170, 72, 255)); d.rectangle([0, g, w, h], fill=(196, 160, 110, 255))
     return im
+SMEAR = {"strike": [2], "strike2": [2], "strike3": [2]}   # cut frames get a baked swing smear
+FLASH = {"hurt": [0]}                                        # hit flash
+TWIG = np.array(BASE["twig"], float)
+def twig_ends(alb_p):
+    al = np.asarray(Image.open(alb_p).convert("RGBA"), float)
+    m = (np.abs(al[..., :3] - TWIG).sum(-1) < 8) & (al[..., 3] > 127)
+    ys, xs = np.nonzero(m)
+    if len(xs) < 3: return None
+    body = np.array([np.nonzero(al[..., 3] > 127)[1].mean(), np.nonzero(al[..., 3] > 127)[0].mean()])
+    d = (xs - body[0]) ** 2 + (ys - body[1]) ** 2
+    return (xs[d.argmax()], ys[d.argmax()]), (xs[d.argmin()], ys[d.argmin()])
+def smear(size, prev_tip, tip, hand):
+    from PIL import ImageDraw
+    im = Image.new("RGBA", size, (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    hx, hy = hand
+    a0 = np.arctan2(prev_tip[1] - hy, prev_tip[0] - hx); a1 = np.arctan2(tip[1] - hy, tip[0] - hx)
+    if a1 - a0 > np.pi: a1 -= 2 * np.pi
+    if a0 - a1 > np.pi: a1 += 2 * np.pi
+    r = np.hypot(tip[0] - hx, tip[1] - hy) + 2
+    outer = [(hx + r * np.cos(a0 + (a1 - a0) * t), hy + r * np.sin(a0 + (a1 - a0) * t)) for t in np.linspace(0, 1, 18)]
+    inner = [(hx + r * (0.45 + 0.4 * t) * np.cos(a0 + (a1 - a0) * t), hy + r * (0.45 + 0.4 * t) * np.sin(a0 + (a1 - a0) * t)) for t in np.linspace(0, 1, 18)]
+    poly = outer + inner[::-1]
+    d.polygon(poly, fill=(255, 210, 110, 255), outline=(26, 20, 40, 255))
+    mid = [((o[0] * 2 + i[0]) / 3, (o[1] * 2 + i[1]) / 3) for o, i in zip(outer, inner)]
+    d.polygon(outer + mid[::-1], fill=(255, 250, 225, 255)); d.line(outer, fill=(26, 20, 40, 255), width=1)
+    return im
 for an, idxs in anims.items():
-    frames = [toon(f"{FR}/{an}_{i}_lit.png", f"{FR}/{an}_{i}_alb.png") for i in sorted(idxs)]
+    idxs = sorted(idxs); frames = []
+    for i in idxs:
+        fr = toon(f"{FR}/{an}_{i}_lit.png", f"{FR}/{an}_{i}_alb.png")
+        if i in SMEAR.get(an, []) and i > 0:
+            pe, ce = twig_ends(f"{FR}/{an}_{i-1}_alb.png"), twig_ends(f"{FR}/{an}_{i}_alb.png")
+            if pe and ce:
+                sm = smear(fr.size, pe[0], ce[0], ce[1]); sm.alpha_composite(fr); fr = sm
+        if i in FLASH.get(an, []):
+            arr = np.asarray(fr).astype(float); body = arr[..., 3] > 0
+            inkm = (np.abs(arr[..., :3] - INK).sum(-1) < 10)
+            arr[..., :3] = np.where((body & ~inkm)[..., None], arr[..., :3] * 0.35 + 255 * 0.65, arr[..., :3]); fr = Image.fromarray(arr.astype(np.uint8), "RGBA")
+        frames.append(fr)
     cw, ch = frames[0].size
     sheet = Image.new("RGBA", (cw * len(frames), ch)); [sheet.paste(fr, (cw * k, 0)) for k, fr in enumerate(frames)]
     sheet.save(f"{OUT}/frog_{an}_sheet.png")
     gif = []
     for fr in frames:
-        base = stage(cw * 3, ch * 3); base.alpha_composite(fr.resize((cw * 3, ch * 3), Image.NEAREST)); gif.append(base.convert("RGB"))
-    gif[0].save(f"{OUT}/frog_{an}.gif", save_all=True, append_images=gif[1:], duration=83, loop=0)
+        base = stage(cw * 2, ch * 2); base.alpha_composite(fr.resize((cw * 2, ch * 2), Image.NEAREST)); gif.append(base.convert("RGB"))
+    hold = [83] * len(gif)
+    if an in ("strike", "strike2", "strike3"): hold[-1] = 250
+    gif[0].save(f"{OUT}/frog_{an}.gif", save_all=True, append_images=gif[1:], duration=hold, loop=0)
     print(an, len(frames), sheet.size)
