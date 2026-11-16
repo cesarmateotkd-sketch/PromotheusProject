@@ -192,3 +192,12 @@ strike 1 overhead cut (7, baked smear), strike 2 rising sweep (6), strike 3 leap
 hurt (5, white hit flash, > < eyes), dodge (7, big tucked hop back), victory (8, ^ ^ eyes),
 all 12 fps in a 256x288 cell from tools/sprites/frog-ronin/anim_build.py. The game should add
 root motion for dodge and hurt on top of the in-cell offsets. Next: the bugs, same pipeline.
+
+### D24 — the bug clan (2026-11-16)
+- Tone: a bug samurai clan; each bug wears the gear of a clan rank, keeps one colour family,
+  stays cute but epic. Beetle = ashigaru (jingasa hat, sashimono banner), Mosquito = ninja
+  (hood, needle proboscis), Spitter = teppo gunner (straw kasa, bamboo spit-tube),
+  Mantis = orchid-pink ronin mini-boss (blade arms, tattered kasa).
+- Hornet Shogun = armoured warlord: gold-and-black kabuto with a crest, red cape, twin stinger
+  blades, about twice the frog's height.
+- Order: all five with a simple set first (idle, attack, hurt), then deepen.
