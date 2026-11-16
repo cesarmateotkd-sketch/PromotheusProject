@@ -18,3 +18,10 @@ Decisions: design/brainstorm.md D19-D22. Approved look: design/art/keyart/frog-r
   cell with the ground fixed. `blender -b --factory-startup --python anim_build.py -- FRAMES [idle,walk,strike]`
 - `anim_post.py` — same pixel finish as the key art; writes `frog_<anim>_sheet.png` (1x strip)
   and a 3x GIF preview. `python3 anim_post.py FRAMES OUTDIR`
+
+## The bug clan
+- `bugs_build.py` — beetle (ashigaru), mosquito (ninja), spitter (teppo gunner), mantis (ronin
+  mini-boss), hornet shogun (boss); idle 6, attack 6, hurt 3 each. Built mirrored (facing +X with
+  mirrored lights) so the fronts face the camera; writes `<bug>_meta.json` with cell size and
+  ground row. `blender -b --factory-startup --python bugs_build.py -- FRAMES [bug,bug]`
+- Finish with `FLIP=1 SHEET_PREFIX="" python3 anim_post.py FRAMES OUTDIR` (flips them to face left).

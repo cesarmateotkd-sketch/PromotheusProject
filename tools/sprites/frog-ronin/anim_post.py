@@ -4,6 +4,7 @@ import sys, re, colorsys, os
 import numpy as np
 from PIL import Image
 FR, OUT = sys.argv[1], sys.argv[2]; os.makedirs(OUT, exist_ok=True)
+PREFIX = os.environ.get("SHEET_PREFIX", "frog_")
 src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "common.py")).read()
 BASE = {k: tuple(map(int, v.split(","))) for k, v in re.findall(r'"(\w+)": \((\d+, \d+, \d+)\)', src.split("mats = {}")[0])}
 NAMES = list(BASE); PAL = np.array([BASE[n] for n in NAMES], float); INK = np.array([26, 20, 40], float)
@@ -28,7 +29,8 @@ def toon(lit_p, alb_p):
     for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)): ol |= np.roll(a, (dy, dx), (0, 1))
     ol &= ~a
     rgba = np.zeros(a.shape + (4,)); rgba[..., :3] = np.where(a[..., None], col, INK); rgba[..., 3] = (a | ol) * 255
-    return Image.fromarray(rgba[2:-2, 2:-2].astype(np.uint8), "RGBA")
+    im = Image.fromarray(rgba[2:-2, 2:-2].astype(np.uint8), "RGBA")
+    return im.transpose(Image.FLIP_LEFT_RIGHT) if os.environ.get("FLIP") else im
 anims = {}
 for f in sorted(os.listdir(FR)):
     m = re.match(r"(\w+?)_(\d+)_lit\.png", f)
@@ -83,11 +85,11 @@ for an, idxs in anims.items():
         frames.append(fr)
     cw, ch = frames[0].size
     sheet = Image.new("RGBA", (cw * len(frames), ch)); [sheet.paste(fr, (cw * k, 0)) for k, fr in enumerate(frames)]
-    sheet.save(f"{OUT}/frog_{an}_sheet.png")
+    sheet.save(f"{OUT}/{PREFIX}{an}_sheet.png")
     gif = []
     for fr in frames:
         base = stage(cw * 2, ch * 2); base.alpha_composite(fr.resize((cw * 2, ch * 2), Image.NEAREST)); gif.append(base.convert("RGB"))
     hold = [83] * len(gif)
     if an in ("strike", "strike2", "strike3"): hold[-1] = 250
-    gif[0].save(f"{OUT}/frog_{an}.gif", save_all=True, append_images=gif[1:], duration=hold, loop=0)
+    gif[0].save(f"{OUT}/{PREFIX}{an}.gif", save_all=True, append_images=gif[1:], duration=hold, loop=0)
     print(an, len(frames), sheet.size)
